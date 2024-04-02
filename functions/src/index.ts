@@ -1,27 +1,34 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * import {onCall} from "firebase-functions/v2/https";
- * import {onDocumentWritten} from "firebase-functions/v2/firestore";
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
-
-
-// Start writing functions
-// https://firebase.google.com/docs/functions/typescript
-
 import {onRequest} from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import express from "express";
-import {addEntry} from "./entryController";
+import {
+  addBox,
+  getAllBoxes,
+  updateBox,
+  deleteBox,
+} from "./boxController";
+import {
+  addReport,
+  deleteReport,
+  getAllReports,
+  getReports,
+} from "./reportController";
 
 const app = express();
+
 app.get("/", (req, res) => {
   logger.info("tested successful", {structuredData: true});
   res.status(200).send("Hey there!");
 });
 
-app.post("/entries", addEntry);
-exports.app = onRequest(app);
+app.post("/boxes", addBox);
+app.get("/boxes", getAllBoxes);
+app.patch("/boxes/:entryId", updateBox);
+app.delete("/boxes/:entryId", deleteBox);
 
+app.post("/reports", addReport);
+app.get("/reports/all", getAllReports);
+app.delete("/reports/:entryId", deleteReport);
+app.get("/reports", getReports);
+
+exports.app = onRequest(app);
