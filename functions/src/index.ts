@@ -13,6 +13,7 @@ import {
   getAllReports,
   getReports,
 } from "./reportController";
+import {onUpdateReceived} from "./telegramBotController";
 
 const app = express();
 
@@ -30,5 +31,7 @@ app.post("/reports", addReport);
 app.get("/reports/all", getAllReports);
 app.delete("/reports/:entryId", deleteReport);
 app.get("/reports", getReports);
+
+app.post("/telegram", onUpdateReceived);
 
 exports.app = onRequest(app);
