@@ -5,4 +5,4 @@ type ReportResponse = {
 //  ...ReportModel,
 }
 
-export default ReportResponse
+export default ReportResponse;

@@ -15,7 +15,7 @@ const addReport = async (req: ReportRequest, res: Response) => {
     network,
   } = req.body;
 
-  if (!name || !fullness ||  !battery || !network) {
+  if (!name || !fullness || !battery || !network) {
     return res.status(404).json({
       status: "error",
       message: "Bad ReportRequest",
@@ -39,13 +39,13 @@ const addReport = async (req: ReportRequest, res: Response) => {
     const fullnessPercentage = calculateFullnessPercentage(boxDoc, fullness);
 
 
-    const report: ReportModel  = {
+    const report: ReportModel = {
       id: entry.id,
       name: name,
       created_at: new Date(),
       fullness: fullnessPercentage,
       battery: battery,
-      network: network
+      network: network,
     };
 
     await entry.set(report);
@@ -56,7 +56,7 @@ const addReport = async (req: ReportRequest, res: Response) => {
       fullness: report.fullness,
       battery: report.battery,
       network: report.network,
-    }
+    };
 
 
     return res.status(200).json({
@@ -64,7 +64,6 @@ const addReport = async (req: ReportRequest, res: Response) => {
       message: "entry added successfully",
       data: reportDto,
     });
-    
   } catch (error) {
     return res.status(500).json("We found an error posting your request!");
   }

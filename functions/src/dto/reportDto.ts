@@ -3,7 +3,7 @@ type ReportDto= {
     address: string,
     fullness: number,
     battery: number,
-    network:  number,
+    network: number,
   }
 
-  export default ReportDto
+export default ReportDto;

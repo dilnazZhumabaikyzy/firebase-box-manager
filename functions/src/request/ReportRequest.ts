@@ -6,4 +6,4 @@ type ReportRequest = {
   params: { entryId: string },
 }
 
-export default ReportRequest
+export default ReportRequest;
