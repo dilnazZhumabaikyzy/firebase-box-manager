@@ -15,7 +15,7 @@ const addReport = async (req: ReportRequest, res: Response) => {
     network,
   } = req.body;
 
-  if (!name || !fullness ||  !battery || !network) {
+  if (!name || !fullness || !battery || !network) {
     return res.status(404).json({
       status: "error",
       message: "Bad ReportRequest",
@@ -39,13 +39,13 @@ const addReport = async (req: ReportRequest, res: Response) => {
     const fullnessPercentage = calculateFullnessPercentage(boxDoc, fullness);
 
 
-    const report: ReportModel  = {
+    const report: ReportModel = {
       id: entry.id,
       name: name,
       created_at: new Date(),
       fullness: fullnessPercentage,
       battery: battery,
-      network: network
+      network: network,
     };
 
     await entry.set(report);
@@ -56,15 +56,15 @@ const addReport = async (req: ReportRequest, res: Response) => {
       fullness: report.fullness,
       battery: report.battery,
       network: report.network,
-    }
+    };
 
-
-    return res.status(200).json({
-      status: "success",
-      message: "entry added successfully",
-      data: reportDto,
-    });
-    
+    return res.status(200).json(
+      {
+        status: "success",
+        message: "entry added successfully",
+        data: reportDto,
+      }
+    );
   } catch (error) {
     return res.status(500).json("We found an error posting your request!");
   }
@@ -75,7 +75,7 @@ const calculateFullnessPercentage = (
   fullness: number
 ): number => {
   logger.info("sh", boxData.sensorHeight, "f", fullness, "h", boxData.height);
-  const percentage = (boxData.sensorHeight - fullness)/boxData.height * 100;
+  const percentage = (boxData.sensorHeight - fullness) / boxData.height * 100;
   logger.info("percentage", percentage);
   return Math.round(percentage);
 };
