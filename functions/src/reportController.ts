@@ -58,13 +58,12 @@ const addReport = async (req: ReportRequest, res: Response) => {
       network: report.network,
     };
 
-    return res.status(200).json(
-      {
-        status: "success",
-        message: "entry added successfully",
-        data: reportDto,
-      }
-    );
+
+    return res.status(200).json({
+      status: "success",
+      message: "entry added successfully",
+      data: reportDto,
+    });
   } catch (error) {
     return res.status(500).json("We found an error posting your request!");
   }
@@ -75,7 +74,7 @@ const calculateFullnessPercentage = (
   fullness: number
 ): number => {
   logger.info("sh", boxData.sensorHeight, "f", fullness, "h", boxData.height);
-  const percentage = (boxData.sensorHeight - fullness) / boxData.height * 100;
+  const percentage = (boxData.sensorHeight - fullness)/boxData.height * 100;
   logger.info("percentage", percentage);
   return Math.round(percentage);
 };
