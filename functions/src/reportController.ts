@@ -91,26 +91,59 @@ const getAllReports = async (req: ReportRequest, res: Response) => {
   }
 };
 
+// const getLastReports = async (req: ReportRequest, res: Response) => {
+//   try {
+//     const querySnapshot = await db.collection("reports").get();
+//     const boxes = await db.collection("boxes").get();
+
+//     const groupedDocs: any = {};
+//     querySnapshot.forEach((doc: any) => {
+//       const data = doc.data();
+//       const name = data.name;
+//       if (!groupedDocs[name] ||
+//         (data.created_at > groupedDocs[name].created_at)) {
+//        const address = 
+//         groupedDocs[name] = {id: doc.id,address: address, ...data};
+//       }
+//     });
+
+//     const lastDocuments = Object.values(groupedDocs);
+//     return res.status(200).json(lastDocuments);
+//   } catch (error) {
+//     return res.status(500).json("We found an error fetching your request!");
+//   }
+// };
 const getLastReports = async (req: ReportRequest, res: Response) => {
   try {
     const querySnapshot = await db.collection("reports").get();
-
     const groupedDocs: any = {};
-    querySnapshot.forEach((doc: any) => {
+
+    // Iterate over each document in the reports collection
+    for (const doc of querySnapshot.docs) {
       const data = doc.data();
       const name = data.name;
-      if (!groupedDocs[name] ||
-        (data.created_at > groupedDocs[name].created_at)) {
-        groupedDocs[name] = {id: doc.id, ...data};
-      }
-    });
 
+      // Query the boxes collection for the box with the same name
+      const boxSnapshot = await db.collection("boxes").where("name", "==", name).get();
+      
+      // Check if there's a matching box document
+      if (!boxSnapshot.empty) {
+        // Get the address from the box document data
+        const address = boxSnapshot.docs[0].data().address;
+        // Add the address to the groupedDocs along with the report data
+        groupedDocs[name] = {...data, address};
+      }
+    }
+
+    // Convert the groupedDocs object to an array
     const lastDocuments = Object.values(groupedDocs);
     return res.status(200).json(lastDocuments);
   } catch (error) {
     return res.status(500).json("We found an error fetching your request!");
   }
 };
+
+
 
 const deleteReport = async (req: ReportRequest, res: Response) => {
   const {params: {entryId}} = req;
