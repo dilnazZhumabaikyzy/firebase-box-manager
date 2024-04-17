@@ -1,7 +1,7 @@
-// import ReportModel from "../model/modelReport";
+import ReportModel from "../model/modelReport";
 
 type ReportResponse = {
- // ...ReportModeel,
+  body: ReportModel,
 };
 
 export default ReportResponse;
