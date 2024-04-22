@@ -14,7 +14,7 @@ type BoxType = {
 
 type Request = {
   body: BoxType,
-  params: {entryId: string},
+  params: { entryId: string },
 }
 
 const addBox = async (req: Request, res: Response) => {
@@ -94,6 +94,7 @@ const updateBox = async (req: Request, res: Response) => {
       address: address || currentData.address,
       sensorHeight: sensorHeight || currentData.sensorHeight,
       isActive: isActive || currentData.isActive,
+      id: entryId,
     };
 
     await entry.set(entryObject).catch((error) => {
@@ -109,9 +110,10 @@ const updateBox = async (req: Request, res: Response) => {
       data: entryObject,
     });
   } catch (error) {
-    return res.status(500).json(
-      "We found an error updating an entry!"
-    );
+    return res.status(404).json({
+      status: "error",
+      message: "box with this id not found",
+    });
   }
 };
 
@@ -119,7 +121,7 @@ const deleteBox = async (req: Request, res: Response) => {
   const {params: {entryId}} = req;
 
   try {
-    const entry = await db.collection("boxes").doc(entryId);
+    const entry = await db.collection("boxes").doxc(entryId);
     await entry.delete().catch((error) => {
       return res.status(400).json({
         status: "error",
@@ -131,9 +133,11 @@ const deleteBox = async (req: Request, res: Response) => {
       message: "entry deleted successfully",
     });
   } catch (error) {
-    return res.status(500).json("We found an error updating an entry!");
+    return res.status(404).json({
+      status: "error",
+      message: "box with this id not found",
+    });
   }
 };
 
 export {addBox, getAllBoxes, updateBox, deleteBox};
-

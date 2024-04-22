@@ -28,9 +28,9 @@ app.patch("/boxes/:entryId", updateBox);
 app.delete("/boxes/:entryId", deleteBox);
 
 app.post("/reports", addReport);
+app.get("/reports", getLastReports);
 app.get("/reports/all", getAllReports);
 app.delete("/reports/:entryId", deleteReport);
-app.get("/reports", getLastReports);
 
 app.post("/telegram", onUpdateReceived);
 
