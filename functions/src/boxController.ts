@@ -80,7 +80,8 @@ const updateBox = async (req: Request, res: Response) => {
     },
     params: {
       entryId,
-    }} = req;
+    },
+  } = req;
 
   try {
     const entry = await db.collection("boxes").doc(entryId);
@@ -121,7 +122,7 @@ const deleteBox = async (req: Request, res: Response) => {
   const {params: {entryId}} = req;
 
   try {
-    const entry = await db.collection("boxes").doxc(entryId);
+    const entry = await db.collection("boxes").doc(entryId);
     await entry.delete().catch((error) => {
       return res.status(400).json({
         status: "error",

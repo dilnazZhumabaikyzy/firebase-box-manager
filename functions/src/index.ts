@@ -14,6 +14,13 @@ import {
   getLastReports,
 } from "./reportController";
 import {onUpdateReceived} from "./telegramBotController";
+import {
+  getUsers,
+  addUser,
+  updateUser,
+  deleteUser,
+  getUserById,
+} from "./userController";
 
 const app = express();
 
@@ -33,5 +40,11 @@ app.get("/reports/all", getAllReports);
 app.delete("/reports/:entryId", deleteReport);
 
 app.post("/telegram", onUpdateReceived);
+
+app.get("/users", getUsers);
+app.post("/users", addUser);
+app.get("/users/:username", getUserById);
+app.patch("/users/:username", updateUser);
+app.delete("/users/:username", deleteUser);
 
 exports.app = onRequest(app);

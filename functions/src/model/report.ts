@@ -1,4 +1,4 @@
-type ReportModel = {
+type Report = {
     id: string,
     created_at: Date,
     name: string,
@@ -7,4 +7,4 @@ type ReportModel = {
     network: number,
   }
 
-export default ReportModel;
+export default Report;

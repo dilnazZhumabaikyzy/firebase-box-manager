@@ -3,11 +3,11 @@ import {db} from "./config/firebase";
 import {firestore} from "firebase-admin";
 import DocumentData = firestore.DocumentData;
 import {logger} from "firebase-functions";
-import ReportModel from "./model/modelReport";
-import ReportRequest from "./request/ReportRequest";
+import ReportModel from "./model/report";
 import ReportDto from "./dto/reportDto";
+import {ResponsesRequests} from "./request/responsesRequests";
 
-const addReport = async (req: ReportRequest, res: Response) => {
+const addReport = async (req: ResponsesRequests, res: Response) => {
   const {
     name,
     fullness,
@@ -18,7 +18,7 @@ const addReport = async (req: ReportRequest, res: Response) => {
   if (!name || !fullness || !battery || !network) {
     return res.status(404).json({
       status: "error",
-      message: "Bad ReportRequest",
+      message: "Bad ResponsesRequests",
     });
   }
 
@@ -79,7 +79,7 @@ const calculateFullnessPercentage = (
   return Math.round(percentage);
 };
 
-const getAllReports = async (req: ReportRequest, res: Response) => {
+const getAllReports = async (req: ResponsesRequests, res: Response) => {
   try {
     const allEntries: ReportModel[] = [];
     const querySnapshot = await db.collection("reports").get();
@@ -91,7 +91,7 @@ const getAllReports = async (req: ReportRequest, res: Response) => {
   }
 };
 
-const getLastReports = async (req: ReportRequest, res: Response) => {
+const getLastReports = async (req: ResponsesRequests, res: Response) => {
   try {
     const querySnapshot = await db.collection("reports").get();
     const groupedDocs: any = {};
@@ -120,7 +120,7 @@ const getLastReports = async (req: ReportRequest, res: Response) => {
 };
 
 
-const deleteReport = async (req: ReportRequest, res: Response) => {
+const deleteReport = async (req: ResponsesRequests, res: Response) => {
   const {params: {entryId}} = req;
 
   try {
