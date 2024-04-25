@@ -1,21 +1,22 @@
 import {Response} from "express";
 import {db} from "./config/firebase";
-import {firestore} from "firebase-admin";
-import DocumentData = firestore.DocumentData;
 import {logger} from "firebase-functions";
-import ReportModel from "./model/report";
+import Report from "./model/report";
 import ReportDto from "./dto/reportDto";
 import {ResponsesRequests} from "./request/responsesRequests";
 
 const addReport = async (req: ResponsesRequests, res: Response) => {
   const {
-    name,
     fullness,
     battery,
     network,
   } = req.body;
 
-  if (!name || !fullness || !battery || !network) {
+  const {
+    boxId,
+  } = req.params;
+
+  if (!fullness || !battery || !network) {
     return res.status(404).json({
       status: "error",
       message: "Bad ResponsesRequests",
@@ -23,46 +24,58 @@ const addReport = async (req: ResponsesRequests, res: Response) => {
   }
 
   try {
-    const entry = db.collection("reports").doc();
-    const boxQuerySnapshot = await db.collection("boxes")
-      .where("name", "==", name).get();
+    const boxRef = await db.collection("boxes").doc(boxId);
+    let box = await boxRef.get();
+    if (box.exists) {
+      const reportEntry = db.collection("boxes").doc(boxId)
+        .collection("reports").doc();
+      logger.info("BAT ANS NET", {battery, network});
 
-    if (boxQuerySnapshot.empty) {
+      await boxRef.update({
+        battery: battery,
+        networkSignal: network,
+      });
+
+      box = await boxRef.get();
+
+      const boxData = box.data();
+
+      const fullnessPercentage =
+        calculateFullnessPercentage(boxData, fullness);
+
+      if (fullnessPercentage >= 0) {
+        const report: Report = {
+          created_at: new Date(),
+          fullness: fullnessPercentage,
+        };
+
+        await reportEntry.set(report);
+
+        const reportDto: ReportDto = {
+          id: boxData?.id,
+          address: boxData?.address,
+          fullness: report.fullness,
+          battery: boxData?.battery,
+          network: boxData?.networkConnection,
+          sleepTimeMinutes: boxData?.sleepTimeMinutes,
+        };
+
+        return res.status(200).json({
+          status: "success",
+          message: "entry added successfully",
+          data: reportDto,
+        });
+      }
+
       return res.status(404).json({
         status: "error",
-        message: "Box not found with the provided name",
+        message: "box data is empty",
       });
     }
 
-    const boxDoc = boxQuerySnapshot.docs[0].data();
-    logger.info("BOX", boxDoc);
-    const fullnessPercentage = calculateFullnessPercentage(boxDoc, fullness);
-
-
-    const report: ReportModel = {
-      id: entry.id,
-      name: name,
-      created_at: new Date(),
-      fullness: fullnessPercentage,
-      battery: battery,
-      network: network,
-    };
-
-    await entry.set(report);
-
-    const reportDto: ReportDto = {
-      name: report.name,
-      address: boxDoc.address,
-      fullness: report.fullness,
-      battery: report.battery,
-      network: report.network,
-    };
-
-
-    return res.status(200).json({
-      status: "success",
-      message: "entry added successfully",
-      data: reportDto,
+    return res.status(404).json({
+      status: "error",
+      message: "Box not found with the provided name",
     });
   } catch (error) {
     return res.status(500).json("We found an error posting your request!");
@@ -70,21 +83,23 @@ const addReport = async (req: ResponsesRequests, res: Response) => {
 };
 
 const calculateFullnessPercentage = (
-  boxData: DocumentData,
+  boxData: FirebaseFirestore.DocumentData | undefined,
   fullness: number
 ): number => {
-  logger.info("sh", boxData.sensorHeight, "f", fullness, "h", boxData.height);
-  const percentage = (boxData.sensorHeight - fullness)/boxData.height * 100;
-  logger.info("percentage", percentage);
+  if (!boxData) return -1;
+
+  const percentage = (boxData.sensorHeight - fullness) / boxData.height * 100;
   return Math.round(percentage);
 };
 
-const getAllReports = async (req: ResponsesRequests, res: Response) => {
+const getReportsOfBox = async (req: ResponsesRequests, res: Response) => {
   try {
-    const allEntries: ReportModel[] = [];
-    const querySnapshot = await db.collection("reports").get();
-    querySnapshot.forEach((doc: any) => allEntries.push(doc.data()));
+    const allEntries: Report[] = [];
+    const {boxId} = req.params;
+    const querySnapshot = await db.collection("boxes").doc(boxId)
+      .collection("reports").get();
 
+    querySnapshot.forEach((doc: any) => allEntries.push(doc.data()));
     return res.status(200).json(allEntries);
   } catch (error) {
     return res.status(500).json("We found an error fetching your request!");
@@ -93,38 +108,31 @@ const getAllReports = async (req: ResponsesRequests, res: Response) => {
 
 const getLastReports = async (req: ResponsesRequests, res: Response) => {
   try {
-    const querySnapshot = await db.collection("reports").get();
-    const groupedDocs: any = {};
+    const boxes = (await db.collection("boxes").get()).docs;
+    const groupedDocs: any = [];
+    for (const boxRef of boxes) {
+      const box = boxRef.data();
+      const reportRef = await db.collection("boxes").doc(box.id)
+        .collection("reports");
 
-    // Iterate over each document in the reports collection
-    for (const doc of querySnapshot.docs) {
-      const data = doc.data();
-      const name = data.name;
-
-      // Query the boxes collection for the box with the same name
-      const boxSnapshot = await db.collection("boxes")
-        .where("name", "==", name).get();
-
-      if (!boxSnapshot.empty) {
-        const address = boxSnapshot.docs[0].data().address;
-        groupedDocs[name] = {...data, address};
-      }
+      const query = reportRef.orderBy("created_at", "desc").limit(1);
+      (await query.get())
+        .forEach((doc) => groupedDocs.push(doc.data()));
     }
 
-    // Convert the groupedDocs object to an array
     const lastDocuments = Object.values(groupedDocs);
     return res.status(200).json(lastDocuments);
-  } catch (error) {
-    return res.status(500).json("We found an error fetching your request!");
+  } catch (error: any) {
+    return res.status(500).json({message: error?.message});
   }
 };
 
 
 const deleteReport = async (req: ResponsesRequests, res: Response) => {
-  const {params: {entryId}} = req;
+  const {params: {boxId}} = req;
 
   try {
-    const entry = await db.collection("reports").doc(entryId);
+    const entry = await db.collection("reports").doc(boxId);
     await entry.delete().catch((error) => {
       return res.status(400).json({
         status: "error",
@@ -140,4 +148,4 @@ const deleteReport = async (req: ResponsesRequests, res: Response) => {
   }
 };
 
-export {addReport, getAllReports, deleteReport, getLastReports};
+export {addReport, getReportsOfBox, deleteReport, getLastReports};

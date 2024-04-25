@@ -1,10 +1,6 @@
 type Report = {
-    id: string,
-    created_at: Date,
-    name: string,
-    fullness: number,
-    battery: number,
-    network: number,
-  }
+  created_at: Date,
+  fullness: number,
+}
 
 export default Report;

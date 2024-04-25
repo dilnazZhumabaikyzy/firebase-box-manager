@@ -1,19 +1,10 @@
 import {Response} from "express";
 import {db} from "./config/firebase";
+import Box from "./model/box";
 
-type BoxType = {
-  name: string,
-  type: string,
-  address: string,
-  height: number,
-  width: number,
-  length: number,
-  isActive: boolean,
-  sensorHeight: number,
-}
 
 type Request = {
-  body: BoxType,
+  body: Box,
   params: { entryId: string },
 }
 
@@ -27,6 +18,7 @@ const addBox = async (req: Request, res: Response) => {
     address,
     sensorHeight,
     isActive,
+    sleepTimeMinutes,
   } = req.body;
   try {
     const entry = db.collection("boxes").doc();
@@ -39,6 +31,7 @@ const addBox = async (req: Request, res: Response) => {
       length: length,
       address: address,
       sensorHeight: sensorHeight,
+      sleepTimeMinutes: sleepTimeMinutes,
       isActive: isActive,
     };
 
@@ -56,9 +49,11 @@ const addBox = async (req: Request, res: Response) => {
 
 const getAllBoxes = async (req: Request, res: Response) => {
   try {
-    const allEntries: BoxType[] = [];
+    const allEntries: Box[] = [];
     const querySnapshot = await db.collection("boxes").get();
-    querySnapshot.forEach((doc: any) => allEntries.push(doc.data()));
+    querySnapshot.forEach(
+      (doc: any) => allEntries.push(doc.data())
+    );
 
     return res.status(200).json(allEntries);
   } catch (error) {
@@ -77,6 +72,7 @@ const updateBox = async (req: Request, res: Response) => {
       address,
       sensorHeight,
       isActive,
+      sleepTimeMinutes,
     },
     params: {
       entryId,
@@ -94,6 +90,7 @@ const updateBox = async (req: Request, res: Response) => {
       length: length || currentData.length,
       address: address || currentData.address,
       sensorHeight: sensorHeight || currentData.sensorHeight,
+      sleepTimeMinutes: sleepTimeMinutes || currentData.sleepTimeMinutes,
       isActive: isActive || currentData.isActive,
       id: entryId,
     };

@@ -10,7 +10,7 @@ import {
 import {
   addReport,
   deleteReport,
-  getAllReports,
+  getReportsOfBox,
   getLastReports,
 } from "./reportController";
 import {onUpdateReceived} from "./telegramBotController";
@@ -34,9 +34,9 @@ app.get("/boxes", getAllBoxes);
 app.patch("/boxes/:entryId", updateBox);
 app.delete("/boxes/:entryId", deleteBox);
 
-app.post("/reports", addReport);
+app.post("/boxes/:boxId/reports", addReport);
 app.get("/reports", getLastReports);
-app.get("/reports/all", getAllReports);
+app.get("/reports/all", getReportsOfBox);
 app.delete("/reports/:entryId", deleteReport);
 
 app.post("/telegram", onUpdateReceived);

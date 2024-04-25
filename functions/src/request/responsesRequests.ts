@@ -5,7 +5,10 @@ import user from "../model/user";
 
 type ResponsesRequests = {
   body: Report,
-  params: { entryId: string },
+  params: {
+    boxId: string,
+    reportId: string,
+  },
 }
 
 
