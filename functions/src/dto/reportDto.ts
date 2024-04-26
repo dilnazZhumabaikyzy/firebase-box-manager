@@ -5,6 +5,12 @@ type ReportDto= {
     battery: number,
     network: number,
     sleepTimeMinutes: number,
-  }
+}
 
-export default ReportDto;
+type FullnessItem = {
+    name: string,
+    fullness: number,
+    created_at: Date,
+};
+
+export {ReportDto, FullnessItem};

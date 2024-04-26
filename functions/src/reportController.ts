@@ -2,10 +2,13 @@ import {Response} from "express";
 import {db} from "./config/firebase";
 import {logger} from "firebase-functions";
 import Report from "./model/report";
-import ReportDto from "./dto/reportDto";
+import {FullnessItem, ReportDto} from "./dto/reportDto";
 import {ResponsesRequests} from "./request/responsesRequests";
+import axios, {AxiosError, AxiosResponse} from "axios";
+
 
 const addReport = async (req: ResponsesRequests, res: Response) => {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
   const {
     fullness,
     battery,
@@ -29,7 +32,6 @@ const addReport = async (req: ResponsesRequests, res: Response) => {
     if (box.exists) {
       const reportEntry = db.collection("boxes").doc(boxId)
         .collection("reports").doc();
-      logger.info("BAT ANS NET", {battery, network});
 
       await boxRef.update({
         battery: battery,
@@ -42,6 +44,25 @@ const addReport = async (req: ResponsesRequests, res: Response) => {
 
       const fullnessPercentage =
         calculateFullnessPercentage(boxData, fullness);
+
+      if (fullnessPercentage >= 90) {
+        const usersSnapshot = await db.collection("users")
+          .where("receiveNotifications", "==", true)
+          .get();
+        const users = usersSnapshot.docs;
+        for (const user of users) {
+          logger.info("USER", user.data());
+          await axios.post(
+            `https://api.telegram.org/bot${botToken}/sendMessage`,
+            {
+              chat_id: user.data().chatId,
+              text: "🔔Новое уведомление🔔\n"+
+                `Бокс "${boxData?.name}" заполнен на ${fullnessPercentage}% `,
+            }
+          ).then((response: AxiosResponse) => logger.info(response.data()))
+            .catch((error: AxiosError) => logger.error(error));
+        }
+      }
 
       if (fullnessPercentage >= 0) {
         const report: Report = {
@@ -106,27 +127,38 @@ const getReportsOfBox = async (req: ResponsesRequests, res: Response) => {
   }
 };
 
-const getLastReports = async (req: ResponsesRequests, res: Response) => {
-  try {
-    const boxes = (await db.collection("boxes").get()).docs;
-    const groupedDocs: any = [];
-    for (const boxRef of boxes) {
-      const box = boxRef.data();
-      const reportRef = await db.collection("boxes").doc(box.id)
-        .collection("reports");
-
-      const query = reportRef.orderBy("created_at", "desc").limit(1);
-      (await query.get())
-        .forEach((doc) => groupedDocs.push(doc.data()));
+const getLastReportsController =
+  async (req: ResponsesRequests, res: Response) => {
+    try {
+      const lastDocuments = await getLastReports();
+      return res.status(200).json(lastDocuments);
+    } catch (error: any) {
+      return res.status(500).json({message: error?.message});
     }
+  };
 
-    const lastDocuments = Object.values(groupedDocs);
-    return res.status(200).json(lastDocuments);
-  } catch (error: any) {
-    return res.status(500).json({message: error?.message});
+const getLastReports = async () => {
+  const boxes = (await db.collection("boxes").get()).docs;
+  const groupedDocs: FullnessItem[] = [];
+  for (const boxRef of boxes) {
+    const box = boxRef.data();
+    const reportRef = await db.collection("boxes").doc(box.id)
+      .collection("reports");
+
+    const query = await reportRef.orderBy("created_at", "desc").limit(1).get();
+    query.forEach((doc) => {
+      const docData = doc.data();
+      const fullnessItem: FullnessItem = {
+        fullness: docData.fullness,
+        name: box?.name,
+        created_at: docData.created_at,
+      };
+      groupedDocs.push(fullnessItem);
+    });
   }
-};
 
+  return groupedDocs;
+};
 
 const deleteReport = async (req: ResponsesRequests, res: Response) => {
   const {params: {boxId}} = req;
@@ -148,4 +180,10 @@ const deleteReport = async (req: ResponsesRequests, res: Response) => {
   }
 };
 
-export {addReport, getReportsOfBox, deleteReport, getLastReports};
+export {
+  addReport,
+  getReportsOfBox,
+  deleteReport,
+  getLastReportsController,
+  getLastReports,
+};

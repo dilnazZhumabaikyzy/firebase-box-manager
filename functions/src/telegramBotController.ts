@@ -3,6 +3,8 @@ import {logger} from "firebase-functions";
 import {Message} from "node-telegram-bot-api";
 import User from "./model/user";
 import {db} from "./config/firebase";
+import {getLastReports} from "./reportController";
+import {FullnessItem} from "./dto/reportDto";
 
 const onUpdateReceived = async (req: Request, res: Response) => {
   const isTelegramMessage = req.body &&
@@ -22,7 +24,7 @@ const onUpdateReceived = async (req: Request, res: Response) => {
       return res.status(200).send(startResponseMessage);
     } else if (req.body.message.text ===
       "Посмотреть заполненность \uD83D\uDC40") {
-      const fullnessResponseMessage = viewFullness(chatId);
+      const fullnessResponseMessage = await viewFullness(chatId);
 
       return res.status(200).send(fullnessResponseMessage);
     } else if (req.body.message.text ===
@@ -44,12 +46,54 @@ const onUpdateReceived = async (req: Request, res: Response) => {
   return res.status(200).send({status: "not a telegram message"});
 };
 
-const viewFullness = (chatId: number) => {
-  const occupancyMessage = "Текущая заполненность боксов: ...";
+const getFullnessColorEmoji = (percent: number): string => {
+  let color = "";
+
+  if (percent >= 70) {
+    for (let i = 0; i < percent / 10; i++) {
+      color += "🟥";
+    }
+  } else if (percent >= 40) {
+    for (let i = 0; i < percent / 10; i++) {
+      color += "🟨";
+    }
+  } else if (percent >= 10) {
+    for (let i = 0; i < percent / 10; i++) {
+      color += "🟩";
+    }
+  } else {
+    color += "🟩";
+  }
+
+  for (let i = 0; i < 10 -percent / 10; i++) {
+    color += "⬜️";
+  }
+
+  return color.trim();
+};
+
+const getFormattedResponseMessage = (list: FullnessItem[]) => {
+  let responseMessage = "Информация о заполненности на данный момент\n";
+
+  list.forEach((item, index: number) => {
+    responseMessage += `${index + 1}. ${item.name}\n`;
+    responseMessage += getFullnessColorEmoji(item.fullness);
+    responseMessage += ` ${item.fullness}%\n`;
+  });
+
+  return responseMessage;
+};
+
+const viewFullness = async (chatId: number) => {
+  const fullnessReport: FullnessItem[] = await getLastReports();
+  logger.debug("FULLNESS LOG", fullnessReport);
+  const responseMessage = getFormattedResponseMessage(fullnessReport);
+
+  logger.info("RESPONSE MESSAGE", responseMessage);
   return {
     method: "sendMessage",
     chat_id: chatId,
-    text: occupancyMessage,
+    text: responseMessage,
     parse_mode: "Markdown",
   };
 };
@@ -141,6 +185,7 @@ const handleStartCommand = async (message: Message, firstName: string) => {
     telegramUsername: message.chat.username || "",
     role: "user",
     receiveNotifications: false,
+    chatId: message.chat.id,
   };
 
   if (user.telegramUsername) {
@@ -148,6 +193,8 @@ const handleStartCommand = async (message: Message, firstName: string) => {
     const doc = await userRef.get();
     if (!doc.exists) {
       await userRef.set({...user});
+    } else if (!doc.data()?.chatId) {
+      await userRef.update({chatId: message.chat.id});
     }
   }
 
@@ -197,6 +244,5 @@ const handleUndefinedCommand = (chatId: number) => {
     parse_mode: "Markdown",
   };
 };
-
 
 export {onUpdateReceived};

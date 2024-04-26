@@ -1,10 +1,10 @@
-import Report from "../dto/reportDto";
+import {ReportDto} from "../dto/reportDto";
 import ReportModel from "../model/report";
 import user from "../model/user";
 
 
 type ResponsesRequests = {
-  body: Report,
+  body: ReportDto,
   params: {
     boxId: string,
     reportId: string,

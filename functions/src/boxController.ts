@@ -2,7 +2,6 @@ import {Response} from "express";
 import {db} from "./config/firebase";
 import Box from "./model/box";
 
-
 type Request = {
   body: Box,
   params: { entryId: string },

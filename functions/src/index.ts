@@ -11,7 +11,7 @@ import {
   addReport,
   deleteReport,
   getReportsOfBox,
-  getLastReports,
+  getLastReportsController,
 } from "./reportController";
 import {onUpdateReceived} from "./telegramBotController";
 import {
@@ -33,9 +33,9 @@ app.post("/boxes", addBox);
 app.get("/boxes", getAllBoxes);
 app.patch("/boxes/:entryId", updateBox);
 app.delete("/boxes/:entryId", deleteBox);
-
 app.post("/boxes/:boxId/reports", addReport);
-app.get("/reports", getLastReports);
+
+app.get("/reports", getLastReportsController);
 app.get("/reports/all", getReportsOfBox);
 app.delete("/reports/:entryId", deleteReport);
 
