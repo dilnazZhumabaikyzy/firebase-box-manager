@@ -45,19 +45,23 @@ const addReport = async (req: ResponsesRequests, res: Response) => {
       const fullnessPercentage =
         calculateFullnessPercentage(boxData, fullness);
 
-      if (fullnessPercentage >= 90) {
+      if (fullnessPercentage >= 90 || battery <= 15) {
         const usersSnapshot = await db.collection("users")
           .where("receiveNotifications", "==", true)
           .get();
         const users = usersSnapshot.docs;
         for (const user of users) {
           logger.info("USER", user.data());
+          let notificationText = "🔔Новое уведомление🔔\n";
+          notificationText = fullness >= 90 && battery > 15 ?
+            `Бокс "${boxData?.name}" заполнен на ${fullnessPercentage}%` :
+            `Заряд бокса "${boxData?.name}" ниже 15%
+            \n Заряд батареи: ${battery}%`;
           await axios.post(
             `https://api.telegram.org/bot${botToken}/sendMessage`,
             {
               chat_id: user.data().chatId,
-              text: "🔔Новое уведомление🔔\n"+
-                `Бокс "${boxData?.name}" заполнен на ${fullnessPercentage}% `,
+              text: notificationText,
             }
           ).then((response: AxiosResponse) => logger.info(response.data()))
             .catch((error: AxiosError) => logger.error(error));

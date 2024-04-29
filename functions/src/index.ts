@@ -1,28 +1,27 @@
 import {onRequest} from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import express from "express";
-import {
-  addBox,
-  getAllBoxes,
-  updateBox,
-  deleteBox,
-} from "./boxController";
+import {addBox, deleteBox, getAllBoxes, updateBox} from "./boxController";
 import {
   addReport,
   deleteReport,
-  getReportsOfBox,
   getLastReportsController,
+  getReportsOfBox,
 } from "./reportController";
 import {onUpdateReceived} from "./telegramBotController";
-import {
-  getUsers,
-  addUser,
-  updateUser,
+import {addUser,
   deleteUser,
   getUserById,
+  getUsers,
+  updateUser,
 } from "./userController";
 
 const app = express();
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const cors = require("cors");
+
+app.use(cors());
 
 app.get("/", (req, res) => {
   logger.info("tested successful", {structuredData: true});

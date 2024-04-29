@@ -35,7 +35,6 @@ export default function Home() {
       </Radio.Group>
       {option === 'boxes' && <Boxes />}
       {option === 'users' && <Users />}
-
     </main>
   );
 }

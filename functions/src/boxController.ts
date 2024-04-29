@@ -62,17 +62,6 @@ const getAllBoxes = async (req: Request, res: Response) => {
 
 const updateBox = async (req: Request, res: Response) => {
   const {
-    body: {
-      name,
-      type,
-      height,
-      width,
-      length,
-      address,
-      sensorHeight,
-      isActive,
-      sleepTimeMinutes,
-    },
     params: {
       entryId,
     },
@@ -80,21 +69,7 @@ const updateBox = async (req: Request, res: Response) => {
 
   try {
     const entry = await db.collection("boxes").doc(entryId);
-    const currentData = (await entry.get()).data() || {};
-    const entryObject = {
-      name: name || currentData.name,
-      type: type || currentData.type,
-      height: height || currentData.height,
-      width: width || currentData.width,
-      length: length || currentData.length,
-      address: address || currentData.address,
-      sensorHeight: sensorHeight || currentData.sensorHeight,
-      sleepTimeMinutes: sleepTimeMinutes || currentData.sleepTimeMinutes,
-      isActive: isActive || currentData.isActive,
-      id: entryId,
-    };
-
-    await entry.set(entryObject).catch((error) => {
+    await entry.update(req.body).catch((error) => {
       return res.status(400).json({
         status: "error",
         message: error.message,
@@ -104,7 +79,7 @@ const updateBox = async (req: Request, res: Response) => {
     return res.status(200).json({
       status: "success",
       message: "entry updated successfully",
-      data: entryObject,
+      data: (await entry.get()).data(),
     });
   } catch (error) {
     return res.status(404).json({
