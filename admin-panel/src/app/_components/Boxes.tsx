@@ -103,13 +103,18 @@ const Boxes = () => {
   const [dataArray, setDataArray] = useState([]);
   const [clickedBox, setClickedBox] = useState();
   const [onAction, setOnAction] = useState(false);
+  const [loading, setLoading] = useState(false);
+
 
   useEffect(() => {
     let responseData = [];
+    setLoading(true);
     axios.get(apiUrl + "/boxes").then((response) => {
       responseData = response.data;
+      setLoading(false);
     }).catch((error) => {
       console.log(error);
+      setLoading(false);
     });
 
     axios.get(apiUrl + "/reports").then((response) => {
@@ -179,7 +184,7 @@ const Boxes = () => {
           <Search placeholder="input search text" allowClear onSearch={onSearch} enterButton/>
         </div>
       </div>
-      <Table className={'w-full mt-5'} columns={columns} dataSource={dataArray}/>
+      <Table className={'w-full mt-5'} columns={columns} dataSource={dataArray} loading={loading}/>
       <EditBoxModal
         form={editForm}
         isEditModalOpen={isEditModalOpen}

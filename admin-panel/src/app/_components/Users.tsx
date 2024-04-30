@@ -5,6 +5,8 @@ import {Button, Form, Input, Modal, Space, Table, TableProps} from "antd";
 import {DeleteOutlined, EditOutlined, ExclamationCircleFilled, PlusOutlined} from "@ant-design/icons";
 import axios from "axios";
 import EditUserModal from "@/app/_components/modals/EditUserModal";
+import NewBoxModal from "@/app/_components/modals/NewBoxModal";
+import NewUserModal from "@/app/_components/modals/NewUserModal";
 
 
 interface DataType {
@@ -36,7 +38,7 @@ const Users = () => {
       title: 'Номер телефона',
       dataIndex: 'phoneNumber',
       key: 'phoneNumber',
-      render: (text) => <span className={"semi-bold"}>{text ? text : "--"}</span>
+      render: (text) => <span className={"semi-bold"}>{text ? "+7 " + text : "--"}</span>
     },
     {
       title: 'Телеграм',
@@ -61,20 +63,27 @@ const Users = () => {
   const [onAction, setOnAction] = useState(false);
   const [clickedBox, setClickedBox] = useState();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [editUserForm] = Form.useForm();
+  const [addUserForm] = Form.useForm();
 
   const {Search} = Input;
   const {confirm} = Modal;
 
   useEffect(() => {
+    setLoading(true);
     axios.get(apiUrl + "/users")
       .then(response => {
         console.log(response.data)
+        setLoading(false);
         setUsers(response.data)
       })
-      .catch(error => console.log(error.message))
+      .catch(error => {
+        console.log(error.message)
+        setLoading(false);
+      })
   }, [onAction]);
 
   const handleDeleteUser = (name: string) => {
@@ -120,14 +129,14 @@ const Users = () => {
   return (
     <>
       <div className={'w-full flex justify-between'}>
-        <Button type="primary" icon={<PlusOutlined/>}>
+        <Button type="primary" onClick={() => setIsAddModalOpen(true)} icon={<PlusOutlined/>}>
           Добавить пользователя
         </Button>
         <div>
           <Search placeholder="input search text" allowClear onSearch={onSearch} enterButton/>
         </div>
       </div>
-      <Table className={'w-full mt-5'} columns={columns} dataSource={users}/>
+      <Table className={'w-full mt-5'} columns={columns} dataSource={users} loading={loading}/>
       <EditUserModal
         form={editUserForm}
         isEditModalOpen={isEditModalOpen}
@@ -135,6 +144,12 @@ const Users = () => {
         clickedBox={clickedBox}
         setOnAction={setOnAction}
       />
+      <NewUserModal
+        form={addUserForm}
+        isAddModalOpen={isAddModalOpen}
+        setIsAddModalOpen={setIsAddModalOpen}
+        clickedBox={clickedBox}
+        setOnAction={setOnAction}/>
     </>
   );
 };
