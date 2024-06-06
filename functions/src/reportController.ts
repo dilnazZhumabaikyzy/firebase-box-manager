@@ -103,7 +103,8 @@ const addReport = async (req: ResponsesRequests, res: Response) => {
       message: "Box not found with the provided name",
     });
   } catch (error) {
-    return res.status(500).json("We found an error posting your request!");
+    return res.status(500).json("We fo" +
+      "und an error posting your request!");
   }
 };
 

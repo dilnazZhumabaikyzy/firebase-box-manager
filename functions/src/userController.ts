@@ -1,11 +1,14 @@
-import {Response} from "express";
+import {Request, Response} from "express";
 import {db} from "./config/firebase";
 import {logger} from "firebase-functions";
 import {UserRequest} from "./request/responsesRequests";
 import User from "./model/user";
+import {UserDto} from "./dto/userDto";
 
-const getUsers = async (req: UserRequest, res: Response) => {
+const getUsers = async (req: Request, res: Response) => {
   try {
+    const user: UserDto | undefined = req.user;
+    logger.debug("author", user);
     const users = await db.collection("users").get();
     const usersList = users.docs.map((doc) => doc.data());
     logger.debug("Users", usersList);

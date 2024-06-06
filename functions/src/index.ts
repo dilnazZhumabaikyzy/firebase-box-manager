@@ -9,19 +9,29 @@ import {
   getReportsOfBox,
 } from "./reportController";
 import {onUpdateReceived} from "./telegramBotController";
-import {addUser,
+import {
+  addUser,
   deleteUser,
   getUserById,
   getUsers,
   updateUser,
 } from "./userController";
+import {
+  register,
+  login,
+  logout,
+  refresh,
+} from "./authenticationController";
+import cookieParser from "cookie-parser";
+import authMiddleware from "./middleware/auth-middleware";
+import {body} from "express-validator";
 
 const app = express();
-
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const cors = require("cors");
 
 app.use(cors());
+app.use(cookieParser());
 
 app.get("/", (req, res) => {
   logger.info("tested successful", {structuredData: true});
@@ -40,7 +50,16 @@ app.delete("/reports/:entryId", deleteReport);
 
 app.post("/telegram", onUpdateReceived);
 
-app.get("/users", getUsers);
+app.post("/auth/register",
+  body("phoneNumber").isMobilePhone("kk-KZ"),
+  body("password").isLength({min: 6, max: 32}),
+  register);
+
+app.post("/auth/login", login);
+app.post("/auth/logout", logout);
+app.post("/auth/refresh", refresh);
+
+app.get("/users", authMiddleware, getUsers);
 app.post("/users", addUser);
 app.get("/users/:username", getUserById);
 app.patch("/users/:username", updateUser);
