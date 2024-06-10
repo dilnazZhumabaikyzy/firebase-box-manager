@@ -1,7 +1,6 @@
 import {Request, Response} from "express";
 import {logger} from "firebase-functions";
 import {Message} from "node-telegram-bot-api";
-import User from "./model/user";
 import {db} from "./config/firebase";
 import {getLastReports} from "./reportController";
 import {FullnessItem} from "./dto/reportDto";
@@ -180,23 +179,25 @@ const unsubscribeForNotifications = async (message: Message) => {
 };
 
 const handleStartCommand = async (message: Message, firstName: string) => {
-  const user: User = {
-    name: message.chat.first_name,
-    telegramUsername: message.chat.username || "",
-    role: "user",
-    receiveNotifications: false,
-    chatId: message.chat.id,
-  };
+  // TODO: user exist check
 
-  if (user.telegramUsername) {
-    const userRef = db.collection("users").doc(user.telegramUsername);
-    const doc = await userRef.get();
-    if (!doc.exists) {
-      await userRef.set({...user});
-    } else if (!doc.data()?.chatId) {
-      await userRef.update({chatId: message.chat.id});
-    }
-  }
+  // const user: User = {
+  //   name: message.chat.first_name,
+  //   telegramUsername: message.chat.username || "",
+  //   role: "user",
+  //   receiveNotifications: false,
+  //   chatId: message.chat.id,
+  // };
+
+  // if (user.telegramUsername) {
+  //   const userRef = db.collection("users").doc(user.telegramUsername);
+  //   const doc = await userRef.get();
+  //   if (!doc.exists) {
+  //     await userRef.set({...user});
+  //   } else if (!doc.data()?.chatId) {
+  //     await userRef.update({chatId: message.chat.id});
+  //   }
+  // }
 
   const startMessage =
     `Приветствую ${firstName}👋🏽\n\nЯ - ваш персональный бот для` +

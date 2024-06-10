@@ -11,6 +11,7 @@ import {
 } from "./services/tokenService";
 import {UserDto} from "./dto/userDto";
 import {validationResult} from "express-validator";
+import User from "./model/user";
 
 const register = async (req: express.Request, res: express.Response) => {
   try {
@@ -49,20 +50,20 @@ const register = async (req: express.Request, res: express.Response) => {
       phoneNumber: userData?.phoneNumber,
     };
 
-    const tokens = generateToken(userDto);
-    if (tokens) {
-      await saveRefreshToken(userDto.username, tokens.refreshToken);
-      res.cookie("refreshToken",
-        tokens.refreshToken,
-        {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true});
-      return res.status(200).json({
-        user: userDto,
-      });
-    }
-
-    return res.status(400).json({
-      message: "Error when parsing token",
+    // const tokens = generateToken(userDto);
+    // if (tokens) {
+    //   await saveRefreshToken(userDto.username, tokens.refreshToken);
+    //   res.cookie("refreshToken",
+    //     tokens.refreshToken,
+    //     {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true});
+    return res.status(200).json({
+      user: userDto,
     });
+    // }
+
+    // return res.status(400).json({
+    //   message: "Error when parsing token",
+    // });
   } catch (error) {
     logger.error("ERROR", error);
     return res.status(400).json({message: "Error when processing request"});
@@ -85,24 +86,30 @@ const login = async (req: express.Request, res: express.Response) => {
         message: "User with this phone number doesn't exists :(",
       });
     }
-    const userData = user.data();
-    const isPassEquals = await bcrypt.compare(password, userData?.password);
-    logger.debug("Password test", password, userData?.password, isPassEquals);
-    if (!isPassEquals) {
-      return res.status(400).json({
-        message: "Incorrect password",
-      });
+    const userData = user.data() as User;
+    if (userData.password != null) {
+      const isPassEquals = await bcrypt.compare(password, userData.password);
+      logger.debug("Password test", password, userData.password, isPassEquals);
+      if (!isPassEquals) {
+        return res.status(400).json({
+          message: "Incorrect password",
+        });
+      }
+    } else {
+      throw Error("users password doesnt exist");
     }
 
-    const userDto: UserDto = {
-      username: userData?.username,
-      phoneNumber: userData?.phoneNumber,
+    const userDto: User = {
+      phoneNumber: userData.phoneNumber,
+      role: userData.role,
+      receiveNotifications: userData.receiveNotifications,
+      name: userData.name,
     };
 
     const tokens = generateToken(userDto);
 
     if (tokens) {
-      await saveRefreshToken(userDto.username, tokens.refreshToken);
+      await saveRefreshToken(userDto.phoneNumber, tokens.refreshToken);
       res.cookie("refreshToken",
         tokens.refreshToken,
         {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true});
@@ -158,15 +165,17 @@ const refresh = async (req: express.Request, res: express.Response) => {
       });
     }
 
-    const userDto: UserDto = {
-      username: userDataFromToken.username,
+    const userDto: User = {
       phoneNumber: userDataFromToken.phoneNumber,
+      role: userDataFromToken.role,
+      receiveNotifications: userDataFromToken.receiveNotifications,
+      name: userDataFromToken.name,
     };
 
     const tokens = generateToken(userDto);
 
     if (tokens) {
-      await saveRefreshToken(userDto.username, tokens.refreshToken);
+      await saveRefreshToken(userDto.phoneNumber, tokens.refreshToken);
       res.cookie("refreshToken",
         tokens.refreshToken,
         {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true});

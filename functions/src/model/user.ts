@@ -1,10 +1,10 @@
 interface User {
-  name?: string;
-  telegramUsername: string;
+  name: string;
+  telegramUsername?: string;
   password?: string;
-  phoneNumber?: number;
+  phoneNumber: string;
   role: string;
-  receiveNotifications?: boolean;
+  receiveNotifications: boolean;
   chatId?: number,
 }
 

@@ -46,6 +46,7 @@ app.post("/boxes/:boxId/reports", addReport);
 
 app.get("/reports", getLastReportsController);
 app.get("/reports/all", getReportsOfBox);
+app.get("/reports/:boxId", getReportsOfBox);
 app.delete("/reports/:entryId", deleteReport);
 
 app.post("/telegram", onUpdateReceived);

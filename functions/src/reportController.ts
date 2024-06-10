@@ -63,7 +63,7 @@ const addReport = async (req: ResponsesRequests, res: Response) => {
               chat_id: user.data().chatId,
               text: notificationText,
             }
-          ).then((response: AxiosResponse) => logger.info(response.data()))
+          ).then((response: AxiosResponse) => logger.info(response.data))
             .catch((error: AxiosError) => logger.error(error));
         }
       }
@@ -132,15 +132,16 @@ const getReportsOfBox = async (req: ResponsesRequests, res: Response) => {
   }
 };
 
-const getLastReportsController =
-  async (req: ResponsesRequests, res: Response) => {
-    try {
-      const lastDocuments = await getLastReports();
-      return res.status(200).json(lastDocuments);
-    } catch (error: any) {
-      return res.status(500).json({message: error?.message});
-    }
-  };
+const getLastReportsController = async (
+  req: ResponsesRequests,
+  res: Response) => {
+  try {
+    const lastDocuments = await getLastReports();
+    return res.status(200).json(lastDocuments);
+  } catch (error: any) {
+    return res.status(500).json({message: error?.message});
+  }
+};
 
 const getLastReports = async () => {
   const boxes = (await db.collection("boxes").get()).docs;

@@ -3,15 +3,17 @@ import {db} from "./config/firebase";
 import {logger} from "firebase-functions";
 import {UserRequest} from "./request/responsesRequests";
 import User from "./model/user";
-import {UserDto} from "./dto/userDto";
+import bcrypt from "bcrypt";
 
 const getUsers = async (req: Request, res: Response) => {
   try {
-    const user: UserDto | undefined = req.user;
-    logger.debug("author", user);
-    const users = await db.collection("users").get();
-    const usersList = users.docs.map((doc) => doc.data());
-    logger.debug("Users", usersList);
+    const usersSnapshot = await db.collection("users").get();
+    const usersList: User[] = usersSnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        ...data,
+      } as User;
+    });
 
     return res.status(200).json(usersList);
   } catch (error) {
@@ -45,9 +47,26 @@ const getUserById = async (req: UserRequest, res: Response) => {
 const addUser = async (req: UserRequest, res: Response) => {
   try {
     const user: User = req.body;
-    if (user.name && user.telegramUsername && user.role) {
-      const userRef = await db.collection("users")
-        .doc(user.telegramUsername).set({...user});
+    if (!(user.name && user.phoneNumber &&
+      user.role && user.receiveNotifications && user.password)) {
+      return res.status(400).json({
+        status: "error",
+        message: "bad request",
+      });
+    }
+
+    if (user.password != null) {
+      const hashedPassword = await bcrypt.hash(user.password, 3);
+      const userRef = await db.collection("users").doc(user.phoneNumber);
+      const userData = await userRef.get();
+
+      if (userData.exists) {
+        return res.status(400).json({
+          message: "User with this phone number already exists",
+        });
+      }
+
+      await userRef.set({...user, password: hashedPassword});
 
       return res.status(200).json({
         status: "success",
@@ -58,7 +77,7 @@ const addUser = async (req: UserRequest, res: Response) => {
 
     return res.status(400).json({
       status: "error",
-      message: "bad request",
+      message: "password is null",
     });
   } catch (error) {
     logger.error(error);

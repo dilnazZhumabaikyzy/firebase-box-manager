@@ -1,11 +1,12 @@
 import jwt from "jsonwebtoken";
 import {db} from "../config/firebase";
 import {UserDto} from "../dto/userDto";
+import User from "../model/user";
 
 const refreshSecret: string = process.env.JWT_REFRESH_SECRET || "";
 const accessSecret: string = process.env.JWT_ACCESS_SECRET || "";
 
-const generateToken = (payload: UserDto) => {
+const generateToken = (payload: User) => {
   if (refreshSecret && accessSecret) {
     const accessToken = jwt.sign(payload,
       accessSecret,
@@ -26,11 +27,16 @@ const generateToken = (payload: UserDto) => {
   return null;
 };
 
-const saveRefreshToken = async (username: string, refreshToken: string) => {
-  const tokenRef = await db.collection("tokens").doc(username);
-  await tokenRef.set({refreshToken});
-
-  return (await tokenRef.get()).data();
+const saveRefreshToken = async (
+  phoneNumber: string | undefined,
+  refreshToken: string) => {
+  if (phoneNumber != null) {
+    const tokenRef = await db.collection("tokens").doc(phoneNumber);
+    await tokenRef.set({refreshToken});
+    return (await tokenRef.get()).data();
+  } else {
+    throw Error("Error when saving refresh token");
+  }
 };
 
 const removeToken = async (username: string) => {
@@ -38,13 +44,13 @@ const removeToken = async (username: string) => {
   return tokenRef;
 };
 
-const validateRefreshToken = (token: string): UserDto | null => {
+const validateRefreshToken = (token: string): User | null => {
   try {
     if (!refreshSecret) {
       return null;
     }
 
-    const userData = jwt.verify(token, refreshSecret) as unknown as UserDto;
+    const userData = jwt.verify(token, refreshSecret) as unknown as User;
     return userData;
   } catch (e) {
     return null;
