@@ -2,26 +2,16 @@ import {onRequest} from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import express from "express";
 import {addBox, deleteBox, getAllBoxes, updateBox} from "./boxController";
-import {
-  addReport,
-  deleteReport,
+import {addReport,
   getLastReportsController,
-  getReportsOfBox,
-} from "./reportController";
+  getReportsOfBox} from "./reportController";
 import {onUpdateReceived} from "./telegramBotController";
-import {
-  addUser,
+import {addUser,
   deleteUser,
   getUserById,
   getUsers,
-  updateUser,
-} from "./userController";
-import {
-  register,
-  login,
-  logout,
-  refresh,
-} from "./authenticationController";
+  updateUser} from "./userController";
+import {login, logout, refresh, register} from "./authenticationController";
 import cookieParser from "cookie-parser";
 import authMiddleware from "./middleware/auth-middleware";
 import {body} from "express-validator";
@@ -47,7 +37,7 @@ app.post("/boxes/:boxId/reports", addReport);
 app.get("/reports", getLastReportsController);
 app.get("/reports/all", getReportsOfBox);
 app.get("/reports/:boxId", getReportsOfBox);
-app.delete("/reports/:entryId", deleteReport);
+
 
 app.post("/telegram", onUpdateReceived);
 

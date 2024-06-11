@@ -4,6 +4,10 @@ import {Message} from "node-telegram-bot-api";
 import {db} from "./config/firebase";
 import {getLastReports} from "./reportController";
 import {FullnessItem} from "./dto/reportDto";
+import User from "./model/user";
+import {firestore} from "firebase-admin";
+import DocumentReference = firestore.DocumentReference;
+import DocumentData = firestore.DocumentData;
 
 const onUpdateReceived = async (req: Request, res: Response) => {
   const isTelegramMessage = req.body &&
@@ -15,31 +19,48 @@ const onUpdateReceived = async (req: Request, res: Response) => {
 
   if (isTelegramMessage) {
     const chatId = req.body.message.chat.id;
-    const firstName = req.body.message.from.first_name;
     const message = req.body.message;
-    if (req.body.message.text === "/start") {
-      const startResponseMessage = await handleStartCommand(message, firstName);
+    logger.debug(chatId, "Test");
+    const chatRef = await db.collection("chats").doc(chatId.toString());
+    const chat = await chatRef.get();
+
+    if (!chat.exists) {
+      logger.debug("login");
+      const startResponseMessage =
+        await handleLogin(message, chatRef);
       logger.debug("test", startResponseMessage);
       return res.status(200).send(startResponseMessage);
-    } else if (req.body.message.text ===
-      "Посмотреть заполненность \uD83D\uDC40") {
-      const fullnessResponseMessage = await viewFullness(chatId);
+    }
+    const state = chat.data()?.state;
+    logger.debug(state, "state");
+    if (state == "waiting number") {
+      const startResponseMessage =
+        await processPhoneNumber(message, chatRef);
+      logger.debug("test", startResponseMessage);
+      return res.status(200).send(startResponseMessage);
+    } else if (state == "authorized") {
+      if (req.body.message.text ===
+        "Посмотреть заполненность \uD83D\uDC40") {
+        const fullnessResponseMessage = await viewFullness(chatId);
 
-      return res.status(200).send(fullnessResponseMessage);
-    } else if (req.body.message.text ===
-      "Подписаться на уведомления \uD83D\uDD14") {
-      const subscribeResponseMessage =
-        await subscribeForNotifications(req.body.message);
+        return res.status(200).send(fullnessResponseMessage);
+      } else if (req.body.message.text ===
+        "Подписаться на уведомления \uD83D\uDD14") {
+        const phoneNumber: string = chat.data()?.phoneNumber;
+        const subscribeResponseMessage =
+          await subscribeForNotifications(req.body.message, phoneNumber);
 
-      return res.status(200).send(subscribeResponseMessage);
-    } else if (req.body.message.text ===
-      "Отписаться от уведомлений 🔕") {
-      const subscribeResponseMessage =
-        await unsubscribeForNotifications(req.body.message);
+        return res.status(200).send(subscribeResponseMessage);
+      } else if (req.body.message.text ===
+        "Отписаться от уведомлений 🔕") {
+        const phoneNumber: string = chat.data()?.phoneNumber;
+        const subscribeResponseMessage =
+          await unsubscribeForNotifications(req.body.message, phoneNumber);
 
-      return res.status(200).send(subscribeResponseMessage);
-    } else {
-      return res.status(200).send(handleUndefinedCommand(chatId));
+        return res.status(200).send(subscribeResponseMessage);
+      } else {
+        return res.status(200).send(handleUndefinedCommand(chatId));
+      }
     }
   }
   return res.status(200).send({status: "not a telegram message"});
@@ -64,7 +85,7 @@ const getFullnessColorEmoji = (percent: number): string => {
     color += "🟩";
   }
 
-  for (let i = 0; i < 10 -percent / 10; i++) {
+  for (let i = 0; i < 10 - percent / 10; i++) {
     color += "⬜️";
   }
 
@@ -97,110 +118,131 @@ const viewFullness = async (chatId: number) => {
   };
 };
 
-const subscribeForNotifications = async (message: Message) => {
-  const username = message.from?.username;
+const subscribeForNotifications = async (
+  message: Message,
+  phoneNumber: string) => {
+  const subscribeMessage =
+    "Вы подписались на уведомления о заполненности боксов";
+  const userRef = db.collection("users").doc(phoneNumber);
+  await userRef.update({receiveNotifications: true});
 
-  if (username != null) {
-    const subscribeMessage =
-      "Вы подписались на уведомления о заполненности боксов";
-    const userRef = db.collection("users").doc(username);
-    await userRef.update({receiveNotifications: true});
-
-    const replyKeyboard = {
-      keyboard: [
-        [
-          {
-            text: "Посмотреть заполненность \uD83D\uDC40",
-          },
-        ],
-        [
-          {
-            text: "Отписаться от уведомлений 🔕",
-          },
-        ],
+  const replyKeyboard = {
+    keyboard: [
+      [
+        {
+          text: "Посмотреть заполненность \uD83D\uDC40",
+        },
       ],
-      resize_keyboard: true,
-    };
-    return {
-      method: "sendMessage",
-      chat_id: message.chat.id,
-      reply_markup: replyKeyboard,
-      text: subscribeMessage,
-      parse_mode: "Markdown",
-    };
-  }
-
+      [
+        {
+          text: "Отписаться от уведомлений 🔕",
+        },
+      ],
+    ],
+    resize_keyboard: true,
+  };
   return {
     method: "sendMessage",
     chat_id: message.chat.id,
-    text: "Что то пошло не так :(",
+    reply_markup: replyKeyboard,
+    text: subscribeMessage,
     parse_mode: "Markdown",
   };
 };
 
-const unsubscribeForNotifications = async (message: Message) => {
-  const username = message.from?.username;
-
-  if (username != null) {
-    const subscribeMessage =
-      "Вы отписались от уведомлений 🔕";
-    const userRef = db.collection("users").doc(username);
-    await userRef.update({receiveNotifications: false});
-    const replyKeyboard = {
-      keyboard: [
-        [
-          {
-            text: "Посмотреть заполненность \uD83D\uDC40",
-          },
-        ],
-        [
-          {
-            text: "Подписаться на уведомления \uD83D\uDD14",
-          },
-        ],
+const unsubscribeForNotifications = async (
+  message: Message,
+  phoneNumber: string) => {
+  const subscribeMessage =
+    "Вы отписались от уведомлений 🔕";
+  const userRef = db.collection("users").doc(phoneNumber);
+  await userRef.update({receiveNotifications: false});
+  const replyKeyboard = {
+    keyboard: [
+      [
+        {
+          text: "Посмотреть заполненность \uD83D\uDC40",
+        },
       ],
-      resize_keyboard: true,
-    };
-    return {
-      method: "sendMessage",
-      chat_id: message.chat.id,
-      reply_markup: replyKeyboard,
-      text: subscribeMessage,
-      parse_mode: "Markdown",
-    };
-  }
-
+      [
+        {
+          text: "Подписаться на уведомления \uD83D\uDD14",
+        },
+      ],
+    ],
+    resize_keyboard: true,
+  };
   return {
     method: "sendMessage",
     chat_id: message.chat.id,
-    text: "Что то пошло не так :(",
+    reply_markup: replyKeyboard,
+    text: subscribeMessage,
     parse_mode: "Markdown",
   };
 };
 
-const handleStartCommand = async (message: Message, firstName: string) => {
-  // TODO: user exist check
+const validatePhoneNumber = (phoneNumber: string) => {
+  const pattern = /^\+\d{11}$/;
 
-  // const user: User = {
-  //   name: message.chat.first_name,
-  //   telegramUsername: message.chat.username || "",
-  //   role: "user",
-  //   receiveNotifications: false,
-  //   chatId: message.chat.id,
-  // };
+  return pattern.test(phoneNumber);
+};
 
-  // if (user.telegramUsername) {
-  //   const userRef = db.collection("users").doc(user.telegramUsername);
-  //   const doc = await userRef.get();
-  //   if (!doc.exists) {
-  //     await userRef.set({...user});
-  //   } else if (!doc.data()?.chatId) {
-  //     await userRef.update({chatId: message.chat.id});
-  //   }
-  // }
+const handleLogin = async (
+  message: Message,
+  chatRef: DocumentReference<DocumentData>
+) => {
+  const enterNumberMessage =
+    "Введите свой номер телефона 📲 \n как в примере: +77657654321";
+
+  await chatRef.set({state: "waiting number"});
+
+  return {
+    method: "sendMessage",
+    chat_id: message.chat.id,
+    text: enterNumberMessage,
+    parse_mode: "Markdown",
+  };
+};
+
+const processPhoneNumber = async (
+  message: Message,
+  chatRef: DocumentReference<DocumentData>
+) => {
+  const phoneNumber: string | undefined = message.text;
+
+  if (phoneNumber && !validatePhoneNumber(phoneNumber)) {
+    return {
+      method: "sendMessage",
+      chat_id: message.chat.id,
+      text: "Неверный формат номера",
+      parse_mode: "Markdown",
+    };
+  }
+
+  const userRef = await db.collection("users")
+    .doc(<string>phoneNumber?.substring(1));
+
+  const user = await userRef.get();
+  if (!user.exists) {
+    return {
+      method: "sendMessage",
+      chat_id: message.chat.id,
+      text: "Вы не сотрудник организации",
+      parse_mode: "Markdown",
+    };
+  }
+
+  const userData: User = user.data() as User;
+  const updatedUser = {
+    ...userData,
+    telegramUsername: message.chat.username,
+    chatId: message.chat.id,
+  };
+
+  await userRef.set(updatedUser);
 
   const startMessage =
-    `Приветствую ${firstName}👋🏽\n\nЯ - ваш персональный бот для` +
+    `Приветствую ${userData.name}👋🏽\n\nЯ - ваш персональный бот для` +
     " управления боксами с одеждой благотворительного фонда." +
     "Вот мои основные функции:\n\n" +
     "1. **Просмотреть заполненность\uD83D\uDC40**:" +
@@ -225,6 +267,12 @@ const handleStartCommand = async (message: Message, firstName: string) => {
     ],
     resize_keyboard: true,
   };
+  await chatRef.set(
+    {
+      state: "authorized",
+      phoneNumber: phoneNumber?.substring(1),
+    }
+  );
 
   return {
     method: "sendMessage",

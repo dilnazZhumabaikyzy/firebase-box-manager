@@ -1,4 +1,4 @@
-import {Response} from "express";
+import {Request, Response} from "express";
 import {db} from "./config/firebase";
 import {logger} from "firebase-functions";
 import Report from "./model/report";
@@ -9,17 +9,11 @@ import axios, {AxiosError, AxiosResponse} from "axios";
 
 const addReport = async (req: ResponsesRequests, res: Response) => {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const {
-    fullness,
-    battery,
-    network,
-  } = req.body;
+  const {fullness} = req.body;
 
-  const {
-    boxId,
-  } = req.params;
+  const {boxId} = req.params;
 
-  if (!fullness || !battery || !network) {
+  if (!fullness) {
     return res.status(404).json({
       status: "error",
       message: "Bad ResponsesRequests",
@@ -33,10 +27,10 @@ const addReport = async (req: ResponsesRequests, res: Response) => {
       const reportEntry = db.collection("boxes").doc(boxId)
         .collection("reports").doc();
 
-      await boxRef.update({
-        battery: battery,
-        networkSignal: network,
-      });
+      // await boxRef.update({
+      //   battery: battery,
+      //   networkSignal: network,
+      // });
 
       box = await boxRef.get();
 
@@ -44,8 +38,8 @@ const addReport = async (req: ResponsesRequests, res: Response) => {
 
       const fullnessPercentage =
         calculateFullnessPercentage(boxData, fullness);
-
-      if (fullnessPercentage >= 90 || battery <= 15) {
+      // || battery <= 15
+      if (fullnessPercentage >= 90) {
         const usersSnapshot = await db.collection("users")
           .where("receiveNotifications", "==", true)
           .get();
@@ -53,10 +47,12 @@ const addReport = async (req: ResponsesRequests, res: Response) => {
         for (const user of users) {
           logger.info("USER", user.data());
           let notificationText = "🔔Новое уведомление🔔\n";
-          notificationText = fullness >= 90 && battery > 15 ?
-            `Бокс "${boxData?.name}" заполнен на ${fullnessPercentage}%` :
-            `Заряд бокса "${boxData?.name}" ниже 15%
-            \n Заряд батареи: ${battery}%`;
+          // notificationText = fullness >= 90 && battery > 15 ?
+          notificationText +=
+            `Бокс "${boxData?.name}" заполнен на ${fullnessPercentage}%`;
+          // fullness >= 90?
+          // `Заряд бокса "${boxData?.name}" ниже 15%
+          // \n Заряд батареи: ${battery}%`;
           await axios.post(
             `https://api.telegram.org/bot${botToken}/sendMessage`,
             {
@@ -80,8 +76,6 @@ const addReport = async (req: ResponsesRequests, res: Response) => {
           id: boxData?.id,
           address: boxData?.address,
           fullness: report.fullness,
-          battery: boxData?.battery,
-          network: boxData?.networkConnection,
           sleepTimeMinutes: boxData?.sleepTimeMinutes,
         };
 
@@ -166,12 +160,12 @@ const getLastReports = async () => {
   return groupedDocs;
 };
 
-const deleteReport = async (req: ResponsesRequests, res: Response) => {
+const deleteReport = async (req: Request, res: Response) => {
   const {params: {boxId}} = req;
 
   try {
     const entry = await db.collection("reports").doc(boxId);
-    await entry.delete().catch((error) => {
+    const deletedEntry = await entry.delete().catch((error) => {
       return res.status(400).json({
         status: "error",
         message: error.message,
@@ -180,9 +174,11 @@ const deleteReport = async (req: ResponsesRequests, res: Response) => {
     return res.status(200).json({
       status: "success",
       message: "entry deleted successfully",
+      deletedEntry: deletedEntry,
     });
   } catch (error) {
-    return res.status(500).json("We found an error updating an entry!");
+    logger.error(error);
+    return res.status(500).json("We found an error deleting an entry!");
   }
 };
 
