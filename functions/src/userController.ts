@@ -1,7 +1,6 @@
 import {Request, Response} from "express";
 import {db} from "./config/firebase";
 import {logger} from "firebase-functions";
-import {UserRequest} from "./request/responsesRequests";
 import User from "./model/user";
 import bcrypt from "bcrypt";
 
@@ -22,12 +21,12 @@ const getUsers = async (req: Request, res: Response) => {
   }
 };
 
-const getUserById = async (req: UserRequest, res: Response) => {
+const getUserById = async (req: Request, res: Response) => {
   try {
-    const {username} = req.params;
+    const {phoneNumber} = req.params;
 
     const user = await db.collection("users")
-      .doc(username).get();
+      .doc(phoneNumber).get();
 
     if (!user.data()) {
       return res.status(404).json({
@@ -44,7 +43,7 @@ const getUserById = async (req: UserRequest, res: Response) => {
   }
 };
 
-const addUser = async (req: UserRequest, res: Response) => {
+const addUser = async (req: Request, res: Response) => {
   try {
     const user: User = req.body;
     if (!(user.name && user.phoneNumber &&
@@ -55,7 +54,7 @@ const addUser = async (req: UserRequest, res: Response) => {
       });
     }
 
-    if (user.password != null) {
+    if (user.password) {
       const hashedPassword = await bcrypt.hash(user.password, 3);
       const userRef = await db.collection("users").doc(user.phoneNumber);
       const userData = await userRef.get();
@@ -85,13 +84,13 @@ const addUser = async (req: UserRequest, res: Response) => {
   }
 };
 
-const updateUser = async (req: UserRequest, res: Response) => {
+const updateUser = async (req: Request, res: Response) => {
   try {
     const user: User = req.body;
     const params = req.params;
 
     const updatedUser = await db.collection("users")
-      .doc(params.username).update({...user}).catch((e) => {
+      .doc(params.phoneNumber).update({...user}).catch((e) => {
         logger.error("error when updating document", e);
         return res.status(400).json({
           status: "error",
@@ -110,12 +109,12 @@ const updateUser = async (req: UserRequest, res: Response) => {
   }
 };
 
-const deleteUser = async (req: UserRequest, res: Response) => {
+const deleteUser = async (req: Request, res: Response) => {
   try {
     const params = req.params;
 
     await db.collection("users")
-      .doc(params.username).delete().catch((error) => {
+      .doc(params.phoneNumber).delete().catch((error) => {
         return res.status(400).json({
           status: "error",
           message: error.message,

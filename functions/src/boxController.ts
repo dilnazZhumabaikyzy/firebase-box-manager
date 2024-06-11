@@ -1,11 +1,6 @@
-import {Response} from "express";
+import {Request, Response} from "express";
 import {db} from "./config/firebase";
 import Box from "./model/box";
-
-type Request = {
-  body: Box,
-  params: { entryId: string },
-}
 
 const addBox = async (req: Request, res: Response) => {
   const {

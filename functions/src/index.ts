@@ -28,10 +28,10 @@ app.get("/", (req, res) => {
   res.status(200).send("Hey there!");
 });
 
-app.post("/boxes", addBox);
-app.get("/boxes", getAllBoxes);
-app.patch("/boxes/:entryId", updateBox);
-app.delete("/boxes/:entryId", deleteBox);
+app.post("/boxes", authMiddleware, addBox);
+app.get("/boxes", authMiddleware, getAllBoxes);
+app.patch("/boxes/:entryId", authMiddleware, updateBox);
+app.delete("/boxes/:entryId", authMiddleware, deleteBox);
 app.post("/boxes/:boxId/reports", addReport);
 
 app.get("/reports", getLastReportsController);
@@ -51,9 +51,9 @@ app.post("/auth/logout", logout);
 app.post("/auth/refresh", refresh);
 
 app.get("/users", authMiddleware, getUsers);
-app.post("/users", addUser);
-app.get("/users/:username", getUserById);
-app.patch("/users/:username", updateUser);
-app.delete("/users/:username", deleteUser);
+app.post("/users", authMiddleware, addUser);
+app.get("/users/:phoneNumber", authMiddleware, getUserById);
+app.patch("/users/:phoneNumber", authMiddleware, updateUser);
+app.delete("/users/:phoneNumber", authMiddleware, deleteUser);
 
 exports.app = onRequest(app);
