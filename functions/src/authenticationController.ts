@@ -130,13 +130,13 @@ const login = async (req: express.Request, res: express.Response) => {
 
 const logout = async (req: express.Request, res: express.Response) => {
   try {
-    const {username} = req.body;
+    const {phoneNumber} = req.body;
 
-    if (!username) {
+    if (!phoneNumber) {
       return res.status(400).json({message: "Invalid Request body"});
     }
 
-    const token = await removeToken(username);
+    const token = await removeToken(phoneNumber);
 
     res.clearCookie("refreshToken");
     return res.status(200).json({
@@ -150,8 +150,14 @@ const logout = async (req: express.Request, res: express.Response) => {
 
 const refresh = async (req: express.Request, res: express.Response) => {
   try {
-    const {refreshToken} = req.cookies;
+    const authHeader: string | undefined = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({message: "Unauthorized user"});
+    }
 
+    const refreshToken = authHeader.split(" ")[1];
+
+    logger.debug(refreshToken);
     if (!refreshToken) {
       return res.status(400).json({message: "Unauthorized user"});
     }

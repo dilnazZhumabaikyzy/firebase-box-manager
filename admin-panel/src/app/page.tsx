@@ -1,14 +1,33 @@
 "use client"
 
 import {Radio, RadioChangeEvent} from 'antd';
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import Boxes from "@/app/_components/Boxes";
 import Users from "@/app/_components/Users";
 import Image from "next/image";
 import logo from '../../public/logo.png';
-import {flag} from "arg";
+import {useUserStore} from "@/store/store";
+import {useRouter} from "next/navigation";
 
 export default function Home() {
+  const router = useRouter();
+  const {user, isAuth, checkAuth} = useUserStore((state) => state);
+
+  useEffect(() => {
+    useUserStore.persist.rehydrate()
+  }, [])
+
+  useEffect(() => {
+    if (localStorage.getItem("access")) {
+      checkAuth();
+    } else {
+        router.push("/login");
+    }
+    console.log(isAuth, "AUTH")
+    // if (!isAuth) {
+    //   router.push("/login");
+    // }
+  }, [])
 
   const [option, setOption] = useState('boxes');
 
@@ -22,6 +41,9 @@ export default function Home() {
       <div className={'flex items-center w-full '}>
         <Image src={logo} alt={'TEPLO'} width={100}/>
         <h1 className={'text-3xl ml-5'}>Панель управления</h1>
+        <p>
+          {user?.name}
+        </p>
       </div>
       <Radio.Group
         onChange={onChange}

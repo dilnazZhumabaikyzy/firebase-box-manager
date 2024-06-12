@@ -6,6 +6,7 @@ import {DeleteOutlined, EditOutlined, ExclamationCircleFilled, PlusOutlined} fro
 import axios from "axios";
 import EditBoxModal from "@/app/_components/modals/EditBoxModal";
 import NewBoxModal from "@/app/_components/modals/NewBoxModal";
+import $api from "@/http";
 
 
 const apiUrl = "https://us-central1-teplotest-d9137.cloudfunctions.net/app";
@@ -109,7 +110,7 @@ const Boxes = () => {
   useEffect(() => {
     let responseData = [];
     setLoading(true);
-    axios.get(apiUrl + "/boxes").then((response) => {
+    $api.get("/boxes").then((response) => {
       responseData = response.data;
       setLoading(false);
     }).catch((error) => {
@@ -117,7 +118,7 @@ const Boxes = () => {
       setLoading(false);
     });
 
-    axios.get(apiUrl + "/reports").then((response) => {
+    $api.get("/reports").then((response) => {
       let dataWithFullness = responseData.map((item, index) => ({...item, fullness: response.data[index]?.fullness}))
       setDataArray(dataWithFullness);
     }).catch((error) => {

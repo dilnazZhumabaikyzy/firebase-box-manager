@@ -3,10 +3,9 @@
 import React, {useEffect, useState} from 'react';
 import {Button, Form, Input, Modal, Space, Table, TableProps} from "antd";
 import {DeleteOutlined, EditOutlined, ExclamationCircleFilled, PlusOutlined} from "@ant-design/icons";
-import axios from "axios";
 import EditUserModal from "@/app/_components/modals/EditUserModal";
-import NewBoxModal from "@/app/_components/modals/NewBoxModal";
 import NewUserModal from "@/app/_components/modals/NewUserModal";
+import $api from "@/http";
 
 
 interface DataType {
@@ -74,7 +73,7 @@ const Users = () => {
 
   useEffect(() => {
     setLoading(true);
-    axios.get(apiUrl + "/users")
+    $api.get( "/users")
       .then(response => {
         console.log(response.data)
         setLoading(false);
@@ -96,7 +95,7 @@ const Users = () => {
       okType: 'danger',
       cancelText: 'Назад',
       onOk() {
-        axios.delete(apiUrl + `/users/${name}`)
+        $api.delete(apiUrl + `/users/${name}`)
           .then(response => {
             console.log(response.data);
             setOnAction(!onAction);

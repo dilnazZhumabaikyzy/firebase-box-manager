@@ -20,7 +20,10 @@ const app = express();
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const cors = require("cors");
 
-app.use(cors());
+app.use(cors({
+  credentials: true,
+  origin: "http://localhost:3000",
+}));
 app.use(cookieParser());
 
 app.get("/", (req, res) => {
