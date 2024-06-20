@@ -3,15 +3,15 @@ import {logger} from "firebase-functions";
 import {db} from "./config/firebase";
 import bcrypt from "bcrypt";
 import {
-  generateToken,
-  saveRefreshToken,
-  removeToken,
-  validateRefreshToken,
   findToken,
+  generateToken,
+  removeToken,
+  saveRefreshToken,
+  validateRefreshToken,
 } from "./services/tokenService";
-import {UserDto} from "./dto/userDto";
 import {validationResult} from "express-validator";
 import User from "./model/user";
+import {addUser} from "./userController";
 
 const register = async (req: express.Request, res: express.Response) => {
   try {
@@ -21,49 +21,7 @@ const register = async (req: express.Request, res: express.Response) => {
       return res.status(400).json({errors: errors.array()});
     }
 
-    const {phoneNumber, username, password} = req.body;
-
-    if (!phoneNumber || !password || !username) {
-      return res.status(400).json({message: "Invalid Request body"});
-    }
-
-    const userRef = db.collection("users").doc(phoneNumber);
-    const user = await userRef.get();
-
-    if (user.exists) {
-      return res.status(400).json({
-        message: "User with this phone number already exists",
-      });
-    }
-    const hashedPassword = await bcrypt.hash(password, 3);
-
-    await userRef.set({
-      phoneNumber,
-      username,
-      password: hashedPassword,
-    });
-
-    const userData = (await userRef.get()).data();
-
-    const userDto: UserDto = {
-      username: userData?.username,
-      phoneNumber: userData?.phoneNumber,
-    };
-
-    // const tokens = generateToken(userDto);
-    // if (tokens) {
-    //   await saveRefreshToken(userDto.username, tokens.refreshToken);
-    //   res.cookie("refreshToken",
-    //     tokens.refreshToken,
-    //     {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true});
-    return res.status(200).json({
-      user: userDto,
-    });
-    // }
-
-    // return res.status(400).json({
-    //   message: "Error when parsing token",
-    // });
+    return addUser(req, res);
   } catch (error) {
     logger.error("ERROR", error);
     return res.status(400).json({message: "Error when processing request"});

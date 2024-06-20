@@ -6,12 +6,19 @@ const login = async (phoneNumber: string, password: string): Promise<AxiosRespon
   return $api.post<AuthResponse>("/auth/login", {phoneNumber, password});
 };
 
-const registration = async (username:string, phoneNumber: string, password: string): Promise<AxiosResponse<AuthResponse>> => {
-  return $api.post<AuthResponse>("/auth/register", {username, phoneNumber, password});
+const registration = async (name: string, phoneNumber: string, password: string): Promise<AxiosResponse<AuthResponse>> => {
+  return $api.post<AuthResponse>("/auth/register",
+    {
+      name: name,
+      role: "user",
+      phoneNumber: phoneNumber,
+      receiveNotifications: false,
+      password: password
+    });
 };
 
-const logout = async (username:string): Promise<AxiosResponse<AuthResponse>> => {
-  return $api.post<AuthResponse>("/auth/logout", {username});
+const logout = async (phoneNumber: string): Promise<AxiosResponse<AuthResponse>> => {
+  return $api.post<AuthResponse>("/auth/logout", {phoneNumber: phoneNumber});
 };
 
 const checkAuth = async () => {
@@ -22,7 +29,6 @@ const checkAuth = async () => {
     console.log(e.response?.data?.message);
   }
 }
-
 
 
 export {login, registration, logout, checkAuth};

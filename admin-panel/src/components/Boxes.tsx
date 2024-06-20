@@ -4,8 +4,8 @@ import React, {useEffect, useState} from 'react';
 import {Button, Form, Input, Modal, Progress, Space, Table, TableProps, Tag} from "antd";
 import {DeleteOutlined, EditOutlined, ExclamationCircleFilled, PlusOutlined} from "@ant-design/icons";
 import axios from "axios";
-import EditBoxModal from "@/app/_components/modals/EditBoxModal";
-import NewBoxModal from "@/app/_components/modals/NewBoxModal";
+import EditBoxModal from "@/components/modals/EditBoxModal";
+import NewBoxModal from "@/components/modals/NewBoxModal";
 import $api from "@/http";
 
 
@@ -139,7 +139,7 @@ const Boxes = () => {
       okType: 'danger',
       cancelText: 'Назад',
       onOk() {
-        axios.delete(apiUrl + `/boxes/${id}`)
+        $api.delete(apiUrl + `/boxes/${id}`)
           .then(response => {
             console.log(response.data);
             setOnAction(!onAction);

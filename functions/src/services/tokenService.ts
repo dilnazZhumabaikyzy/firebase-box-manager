@@ -10,12 +10,12 @@ const generateToken = (payload: User) => {
   if (refreshSecret && accessSecret) {
     const accessToken = jwt.sign(payload,
       accessSecret,
-      {expiresIn: "15s"},
+      {expiresIn: "1h"},
     );
 
     const refreshToken = jwt.sign(payload,
       refreshSecret,
-      {expiresIn: "1m"},
+      {expiresIn: "15d"},
     );
 
     return {

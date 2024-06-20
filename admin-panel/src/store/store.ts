@@ -1,6 +1,6 @@
 import {IUser} from "@/models/IUser";
 import {create} from "zustand";
-import {login} from "@/services/AuthService";
+import {login, logout, registration} from "@/services/AuthService";
 import axios from "axios";
 import {API_URL} from "@/http";
 import {persist} from "zustand/middleware";
@@ -12,7 +12,9 @@ export interface UserState {
 
 export type UserActions = {
   login: (phoneNumber: string, password: string) => string | null
+  registration: (name: string, phoneNumber: string, password: string) =>  Error[] | string
   checkAuth: () => void
+  logout: (phoneNumber) => void
 };
 
 export type UserStore = UserState & UserActions;
@@ -27,9 +29,6 @@ export const useUserStore = create<UserStore>()(
           const response = await login("7" + phoneNumber, password);
           localStorage.setItem("access", response.data.accessToken);
           localStorage.setItem("refresh", response.data.refreshToken);
-
-          console.log(response.data);
-          set({user: response.data.user, isAuth: true});
           return null;
         } catch (e) {
           console.log(e);
@@ -37,6 +36,33 @@ export const useUserStore = create<UserStore>()(
             return e.response?.data?.message;
           }
           return "NetWork Error";
+        }
+      },
+      registration: async (name: string, phoneNumber: string, password: string) => {
+        try {
+          const response = await registration(name,"7" + phoneNumber, password);
+
+          console.log(response);
+          set({user: response.data.user, isAuth: true});
+          return [];
+        } catch (e) {
+          console.log(e);
+          if (e.response?.status === 400 || e.response?.status === 401) {
+            return e.response?.data?.message ? e.response?.data?.message : e.response.data.errors;
+          }
+          return "NetWork Error";
+        }
+      },
+      logout: async (phoneNumber: string) => {
+        try {
+          const response = await logout("7" + phoneNumber);
+          localStorage.removeItem("access");
+          localStorage.removeItem("refresh");
+
+          console.log(response.data);
+          set({user: null, isAuth: false});
+        } catch (e) {
+          console.log(e);
         }
       },
       checkAuth: async () => {

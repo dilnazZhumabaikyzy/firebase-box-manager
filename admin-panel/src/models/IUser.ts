@@ -5,6 +5,5 @@ export interface IUser {
   phoneNumber: string;
   role: string;
   receiveNotifications: boolean;
-  chatId?: number,
-
+  chatId?: number;
 }

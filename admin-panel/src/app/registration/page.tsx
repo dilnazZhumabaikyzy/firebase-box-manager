@@ -1,10 +1,10 @@
 import React from 'react';
-import LoginForm from "@/components/loginForm";
+import RegistrationForm from "@/components/registrationForm";
 
 const Page = () => {
   return (
     <div className={"w-full h-[100vh] flex justify-center items-center flex-col"}>
-      <LoginForm />
+      <RegistrationForm />
     </div>
   );
 };

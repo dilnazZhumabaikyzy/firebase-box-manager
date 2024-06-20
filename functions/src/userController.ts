@@ -47,7 +47,7 @@ const addUser = async (req: Request, res: Response) => {
   try {
     const user: User = req.body;
     if (!(user.name && user.phoneNumber &&
-      user.role && user.receiveNotifications && user.password)) {
+      user.role && user.password)) {
       return res.status(400).json({
         status: "error",
         message: "bad request",

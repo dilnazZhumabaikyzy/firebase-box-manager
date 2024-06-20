@@ -1,8 +1,10 @@
 import {Request, Response} from "express";
 import {db} from "./config/firebase";
 import Box from "./model/box";
+import {logger} from "firebase-functions";
 
 const addBox = async (req: Request, res: Response) => {
+  logger.debug("req body", req.body);
   const {
     name,
     type,
@@ -28,6 +30,8 @@ const addBox = async (req: Request, res: Response) => {
       sleepTimeMinutes: sleepTimeMinutes,
       isActive: isActive,
     };
+
+    logger.debug(entryObject.toString(), "req");
 
     await entry.set(entryObject);
 

@@ -5,6 +5,7 @@ import {LockOutlined} from '@ant-design/icons';
 import {Button, Form, Input} from 'antd';
 import {useRouter} from "next/navigation";
 import {useUserStore} from "@/store/store";
+import Link from "next/link";
 
 const App: React.FC = () => {
   const router = useRouter();
@@ -26,14 +27,19 @@ const App: React.FC = () => {
 
   };
 
+  const onChange = () => {
+    setError('')
+  };
+
   return (
     <Form
       name="normal_login"
-      className="login-form"
+      className="login-form min-w-[300px]"
       initialValues={{remember: true}}
       onFinish={onFinish}
-
+      onChange={onChange}
     >
+      <h1 className={"text-xl font-semibold text-center mb-6"}>Вход</h1>
       <Form.Item
         name="phoneNumber"
         validateDebounce={300}
@@ -69,9 +75,16 @@ const App: React.FC = () => {
         {error}
       </p>
       <Form.Item>
-        <Button type="primary" htmlType="submit" className="login-form-button" loading={loading}>
-          Войти
-        </Button>
+        <Form.Item>
+          <div className={"w-full flex justify-between items-center"}>
+            <Button type="primary" htmlType="submit" className="login-form-button" loading={loading}>
+              Войти
+            </Button>
+            <Link href={"/registration"}>
+              Зарегистрироваться
+            </Link>
+          </div>
+        </Form.Item>
       </Form.Item>
     </Form>
   );

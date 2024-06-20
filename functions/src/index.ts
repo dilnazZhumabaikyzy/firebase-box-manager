@@ -35,7 +35,7 @@ app.post("/boxes", authMiddleware, addBox);
 app.get("/boxes", authMiddleware, getAllBoxes);
 app.patch("/boxes/:entryId", authMiddleware, updateBox);
 app.delete("/boxes/:entryId", authMiddleware, deleteBox);
-app.post("/boxes/:boxId/reports", addReport);
+app.get("/boxes/:boxId/reports", addReport);
 
 app.get("/reports", getLastReportsController);
 app.get("/reports/all", getReportsOfBox);
@@ -45,10 +45,10 @@ app.get("/reports/:boxId", getReportsOfBox);
 app.post("/telegram", onUpdateReceived);
 
 app.post("/auth/register",
+  body("name").isLength({min: 6, max: 32}),
   body("phoneNumber").isMobilePhone("kk-KZ"),
   body("password").isLength({min: 6, max: 32}),
   register);
-
 app.post("/auth/login", login);
 app.post("/auth/logout", logout);
 app.post("/auth/refresh", refresh);

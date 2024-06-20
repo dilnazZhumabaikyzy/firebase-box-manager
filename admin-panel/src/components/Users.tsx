@@ -1,10 +1,10 @@
 "use client";
 
 import React, {useEffect, useState} from 'react';
-import {Button, Form, Input, Modal, Space, Table, TableProps} from "antd";
+import {Button, Form, Input, Modal, Space, Table, TableProps, Tag} from "antd";
 import {DeleteOutlined, EditOutlined, ExclamationCircleFilled, PlusOutlined} from "@ant-design/icons";
-import EditUserModal from "@/app/_components/modals/EditUserModal";
-import NewUserModal from "@/app/_components/modals/NewUserModal";
+import EditUserModal from "@/components/modals/EditUserModal";
+import NewUserModal from "@/components/modals/NewUserModal";
 import $api from "@/http";
 
 
@@ -31,7 +31,14 @@ const Users = () => {
       title: 'Роль',
       dataIndex: 'role',
       key: 'role',
-      render: (text) => <span className={"semi-bold"}>{text}</span>,
+      render: (_, {role}) => {
+        const color = role === "admin" ? "green" : "blue"
+        return (
+          <Tag color={color}>
+            {role === "admin" ? "Администратор" : "Пользователь"}
+          </Tag>
+        );
+      }
     },
     {
       title: 'Номер телефона',
@@ -47,12 +54,12 @@ const Users = () => {
     },
     {
       title: 'Действия',
-      dataIndex: 'telegramUsername',
-      key: 'telegramUsername',
-      render: (name: string) => (
+      dataIndex: 'phoneNumber',
+      key: 'phoneNumber',
+      render: (phoneNumber: string) => (
         <Space size="large">
-          <EditOutlined onClick={() => handleEditUser(name)} className={'text-[20px] text-blue-700'}/>
-          <DeleteOutlined onClick={() => handleDeleteUser(name)} className={'text-[20px] text-red-700'}/>
+          <EditOutlined onClick={() => handleEditUser(phoneNumber)} className={'text-[20px] text-blue-700'}/>
+          <DeleteOutlined onClick={() => handleDeleteUser(phoneNumber)} className={'text-[20px] text-red-700'}/>
         </Space>
       ),
     },
@@ -85,8 +92,8 @@ const Users = () => {
       })
   }, [onAction]);
 
-  const handleDeleteUser = (name: string) => {
-    console.log(name);
+  const handleDeleteUser = (phoneNumber: string) => {
+    console.log(phoneNumber);
     confirm({
       title: 'Вы уверены, что хотите удалить данного пользователя?',
       icon: <ExclamationCircleFilled/>,
@@ -95,7 +102,7 @@ const Users = () => {
       okType: 'danger',
       cancelText: 'Назад',
       onOk() {
-        $api.delete(apiUrl + `/users/${name}`)
+        $api.delete(apiUrl + `/users/${phoneNumber}`)
           .then(response => {
             console.log(response.data);
             setOnAction(!onAction);
@@ -112,9 +119,11 @@ const Users = () => {
     });
   };
 
-  function handleEditUser(name: string) {
-    let clickedItem = users.filter(item => name === item.telegramUsername)[0];
+  function handleEditUser(phoneNumber: string) {
+    console.log(phoneNumber, "name");
+    let clickedItem = users.filter(item => phoneNumber === item.phoneNumber)[0];
     console.log("clicked item", clickedItem);
+    clickedItem = clickedItem.telegramUsername ? clickedItem : {...clickedItem, telegramUsername: ""}
     setClickedBox(clickedItem);
 
     editUserForm.setFieldsValue(clickedItem);

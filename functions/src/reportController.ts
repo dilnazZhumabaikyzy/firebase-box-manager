@@ -6,14 +6,14 @@ import {FullnessItem, ReportDto} from "./dto/reportDto";
 import {ResponsesRequests} from "./request/responsesRequests";
 import axios, {AxiosError, AxiosResponse} from "axios";
 
-
-const addReport = async (req: ResponsesRequests, res: Response) => {
+const addReport = async (req: Request, res: Response) => {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const {fullness} = req.body;
-
   const {boxId} = req.params;
+  const {query} = req;
 
-  if (!fullness) {
+  const fullness = (typeof query.fullness === "string") ? query.fullness : "";
+
+  if (fullness != undefined && fullness === "") {
     return res.status(404).json({
       status: "error",
       message: "Bad ResponsesRequests",
@@ -37,9 +37,10 @@ const addReport = async (req: ResponsesRequests, res: Response) => {
       const boxData = box.data();
 
       const fullnessPercentage =
-        calculateFullnessPercentage(boxData, fullness);
+        calculateFullnessPercentage(boxData, parseInt(fullness));
       // || battery <= 15
-      if (fullnessPercentage >= 90) {
+      // fullnessPercentage >= 90
+      if (fullness) {
         const usersSnapshot = await db.collection("users")
           .where("receiveNotifications", "==", true)
           .get();
@@ -49,7 +50,8 @@ const addReport = async (req: ResponsesRequests, res: Response) => {
           let notificationText = "🔔Новое уведомление🔔\n";
           // notificationText = fullness >= 90 && battery > 15 ?
           notificationText +=
-            `Бокс "${boxData?.name}" заполнен на ${fullnessPercentage}%`;
+            // `Бокс "${boxData?.name}" заполнен на ${fullnessPercentage}%`;
+            `Бокс "${boxData?.name}"\n Температура: ${fullness} C`;
           // fullness >= 90?
           // `Заряд бокса "${boxData?.name}" ниже 15%
           // \n Заряд батареи: ${battery}%`;
@@ -68,6 +70,7 @@ const addReport = async (req: ResponsesRequests, res: Response) => {
         const report: Report = {
           created_at: new Date(),
           fullness: fullnessPercentage,
+          fullnessInSM: Number(fullness),
         };
 
         await reportEntry.set(report);
@@ -77,6 +80,7 @@ const addReport = async (req: ResponsesRequests, res: Response) => {
           address: boxData?.address,
           fullness: report.fullness,
           sleepTimeMinutes: boxData?.sleepTimeMinutes,
+          fullnessInSM: Number(fullness),
         };
 
         return res.status(200).json({
@@ -151,6 +155,7 @@ const getLastReports = async () => {
       const fullnessItem: FullnessItem = {
         fullness: docData.fullness,
         name: box?.name,
+        fullnessInSM: docData.fullnessInSM,
         created_at: docData.created_at,
       };
       groupedDocs.push(fullnessItem);

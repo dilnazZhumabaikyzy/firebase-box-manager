@@ -1,6 +1,7 @@
 import React from 'react';
 import {Flex, Form, Input, InputNumber, Modal, Switch} from "antd";
 import axios from "axios";
+import $api from "@/http";
 
 
 const validateMessages = {
@@ -23,7 +24,7 @@ const NewBoxModal = ({form, isAddModalOpen, setIsAddModalOpen, clickedBox, setOn
       .then((values) => {
         console.log(values);
 
-        axios.post(apiUrl + `/boxes/`, {...values, width: 1, length: 1, type: "STREET", })
+        $api.post(`/boxes`, {...values, width: 1, length: 1, type: "STREET", isActive: true})
           .then(response => {
             setIsAddModalOpen(false);
             setOnAction(true);
@@ -79,9 +80,6 @@ const NewBoxModal = ({form, isAddModalOpen, setIsAddModalOpen, clickedBox, setOn
           ]}
         >
           <InputNumber/>
-        </Form.Item>
-        <Form.Item name="isActive" label="Активный" valuePropName="checked">
-          <Switch/>
         </Form.Item>
         <Flex>
           <Form.Item

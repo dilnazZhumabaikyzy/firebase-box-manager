@@ -98,7 +98,8 @@ const getFormattedResponseMessage = (list: FullnessItem[]) => {
   list.forEach((item, index: number) => {
     responseMessage += `${index + 1}. ${item.name}\n`;
     responseMessage += getFullnessColorEmoji(item.fullness);
-    responseMessage += ` ${item.fullness}%\n`;
+    // eslint-disable-next-line max-len
+    responseMessage += ` ${item.fullness}% ${item.fullnessInSM ? "🌡 " + item.fullnessInSM + "C" : ""}\n`;
   });
 
   return responseMessage;

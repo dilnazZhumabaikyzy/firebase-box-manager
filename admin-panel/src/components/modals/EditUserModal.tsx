@@ -1,6 +1,6 @@
 import React from 'react';
-import {Flex, Form, Input, InputNumber, Modal, Select} from "antd";
-import axios from "axios";
+import {Form, Input, Modal, Select} from "antd";
+import $api from "@/http";
 
 
 const validateMessages = {
@@ -15,14 +15,14 @@ const validateMessages = {
 
 const apiUrl = "https://us-central1-teplotest-d9137.cloudfunctions.net/app";
 
-const EditBoxModal = ({form, isEditModalOpen, setIsEditModalOpen, clickedBox, setOnAction}) => {
+const EditUserModal = ({form, isEditModalOpen, setIsEditModalOpen, clickedBox, setOnAction}) => {
 
 
   function handleEditOk() {
     form.validateFields()
       .then((values) => {
         console.log(values);
-        axios.patch(apiUrl + `/users/${clickedBox.telegramUsername}`, values)
+        $api.patch(apiUrl + `/users/${clickedBox.phoneNumber}`, values)
           .then(response => {
             setIsEditModalOpen(false);
             setOnAction(true);
@@ -87,4 +87,4 @@ const EditBoxModal = ({form, isEditModalOpen, setIsEditModalOpen, clickedBox, se
   );
 };
 
-export default EditBoxModal;
+export default EditUserModal;
