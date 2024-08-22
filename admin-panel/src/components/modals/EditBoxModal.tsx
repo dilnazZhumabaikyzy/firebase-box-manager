@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {FC} from 'react';
 import {Flex, Form, Input, InputNumber, Modal} from "antd";
 import axios from "axios";
 
@@ -15,18 +15,22 @@ const validateMessages = {
 
 const apiUrl = "https://us-central1-teplotest-d9137.cloudfunctions.net/app";
 
-const EditBoxModal = ({form, isEditModalOpen, setIsEditModalOpen, clickedBox, setOnAction}) => {
+const EditBoxModal: FC<{
+  form: any,
+  isEditModalOpen: boolean,
+  setIsEditModalOpen: any,
+  clickedBox: any,
+  setOnAction: any
+}> = ({form, isEditModalOpen, setIsEditModalOpen, clickedBox, setOnAction}) => {
 
 
   function handleEditOk() {
     form.validateFields()
-      .then((values) => {
-        console.log(values);
+      .then((values: any) => {
         axios.patch(apiUrl + `/boxes/${clickedBox.id}`, values)
           .then(response => {
             setIsEditModalOpen(false);
             setOnAction(true);
-            console.log(response);
           })
           .catch(error => {
             console.log(error);

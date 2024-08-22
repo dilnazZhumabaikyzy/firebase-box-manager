@@ -35,7 +35,7 @@ app.post("/boxes", authMiddleware, addBox);
 app.get("/boxes", authMiddleware, getAllBoxes);
 app.patch("/boxes/:entryId", authMiddleware, updateBox);
 app.delete("/boxes/:entryId", authMiddleware, deleteBox);
-app.get("/boxes/:boxId/reports", addReport);
+app.post("/boxes/:boxId/reports", addReport);
 
 app.get("/reports", getLastReportsController);
 app.get("/reports/all", getReportsOfBox);

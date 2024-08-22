@@ -6,17 +6,29 @@ import {FullnessItem, ReportDto} from "./dto/reportDto";
 import {ResponsesRequests} from "./request/responsesRequests";
 import axios, {AxiosError, AxiosResponse} from "axios";
 
+interface Body {
+  f: number,
+  t: number,
+  b: number,
+  h: number
+}
+
 const addReport = async (req: Request, res: Response) => {
+  logger.debug("REPORTS");
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   const {boxId} = req.params;
-  const {query} = req;
+  // const {query} = req;
+  const body: Body = req.body;
+  logger.debug(req.body);
 
-  const fullness = (typeof query.fullness === "string") ? query.fullness : "";
+  // eslint-disable-next-line max-len
+  // const fullness = (typeof query.fullness === "string") ? query.fullness : "";
 
-  if (fullness != undefined && fullness === "") {
+  if (!body.f) {
+    logger.debug("FULLNESS", body.f);
     return res.status(404).json({
       status: "error",
-      message: "Bad ResponsesRequests",
+      message: "Bad Responses Requests",
     });
   }
 
@@ -37,10 +49,8 @@ const addReport = async (req: Request, res: Response) => {
       const boxData = box.data();
 
       const fullnessPercentage =
-        calculateFullnessPercentage(boxData, parseInt(fullness));
-      // || battery <= 15
-      // fullnessPercentage >= 90
-      if (fullness) {
+        calculateFullnessPercentage(boxData, body.f);
+      if (body.f) {
         const usersSnapshot = await db.collection("users")
           .where("receiveNotifications", "==", true)
           .get();
@@ -48,13 +58,12 @@ const addReport = async (req: Request, res: Response) => {
         for (const user of users) {
           logger.info("USER", user.data());
           let notificationText = "🔔Новое уведомление🔔\n";
-          // notificationText = fullness >= 90 && battery > 15 ?
-          notificationText +=
-            // `Бокс "${boxData?.name}" заполнен на ${fullnessPercentage}%`;
-            `Бокс "${boxData?.name}"\n Температура: ${fullness} C`;
-          // fullness >= 90?
-          // `Заряд бокса "${boxData?.name}" ниже 15%
-          // \n Заряд батареи: ${battery}%`;
+          notificationText += `Бокс "${boxData?.name}" 
+            заполнен на ${fullnessPercentage}%
+             \n Температура: ${body.t} C
+             \n Влажность: ${body.h} 
+             \n Батарея: ${body.b}
+             `;
           await axios.post(
             `https://api.telegram.org/bot${botToken}/sendMessage`,
             {
@@ -65,41 +74,32 @@ const addReport = async (req: Request, res: Response) => {
             .catch((error: AxiosError) => logger.error(error));
         }
       }
-
+      logger.debug(fullnessPercentage);
       if (fullnessPercentage >= 0) {
         const report: Report = {
           created_at: new Date(),
           fullness: fullnessPercentage,
-          fullnessInSM: Number(fullness),
+          fullnessInSM: body.f,
+          temperature: body.t,
+          humidity: body.h,
+          battery: body.b,
         };
 
         await reportEntry.set(report);
 
         const reportDto: ReportDto = {
-          id: boxData?.id,
-          address: boxData?.address,
-          fullness: report.fullness,
-          sleepTimeMinutes: boxData?.sleepTimeMinutes,
-          fullnessInSM: Number(fullness),
+          st: boxData?.sleepTimeMinutes,
         };
 
         return res.status(200).json({
-          status: "success",
-          message: "entry added successfully",
           data: reportDto,
         });
       }
 
-      return res.status(404).json({
-        status: "error",
-        message: "box data is empty",
-      });
+      return res.status(400).json();
     }
 
-    return res.status(404).json({
-      status: "error",
-      message: "Box not found with the provided name",
-    });
+    return res.status(404);
   } catch (error) {
     return res.status(500).json("We fo" +
       "und an error posting your request!");

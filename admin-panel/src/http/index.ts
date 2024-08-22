@@ -31,7 +31,6 @@ $api.interceptors.response.use((config) => {
       localStorage.setItem("access", response.data.accessToken)
       return $api.request(originalRequest);
     } catch (e) {
-      console.log(e, "doesn't authorized");
       window.location.replace("/login");
     }
   }

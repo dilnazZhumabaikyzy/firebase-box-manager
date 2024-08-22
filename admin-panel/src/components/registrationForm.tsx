@@ -3,7 +3,6 @@
 import React, {useState} from 'react';
 import {LockOutlined} from '@ant-design/icons';
 import {Button, Form, Input} from 'antd';
-import {useRouter} from "next/navigation";
 import {useUserStore} from "@/store/store";
 import Link from "next/link";
 
@@ -16,7 +15,6 @@ export interface Error {
 }
 
 const RegistrationForm: React.FC = () => {
-  const router = useRouter();
   const {registration} = useUserStore((state) => state);
   const [isRegistered, setIsRegistered] = useState(false);
 
@@ -25,7 +23,7 @@ const RegistrationForm: React.FC = () => {
 
   const onFinish = async (values: any) => {
     setLoading(true);
-    const response: Error[] | string = await registration(values.name, values.phoneNumber, values.password);
+    const response: string | Error[] = await registration(values.name, values.phoneNumber, values.password);
     console.log("response", response)
     if (Array.isArray(response) && response.length !== 0 && response) {
       setErrors(response);

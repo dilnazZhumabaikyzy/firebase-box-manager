@@ -25,7 +25,7 @@ const checkAuth = async () => {
   try {
     const response = await axios.post(`${API_URL}/auth/refresh`, {}, {withCredentials: true});
     localStorage.setItem("access", response.data.accessToken);
-  } catch (e) {
+  } catch (e: any) {
     console.log(e.response?.data?.message);
   }
 }

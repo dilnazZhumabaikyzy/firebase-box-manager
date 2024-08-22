@@ -65,7 +65,7 @@ const Users = () => {
     },
   ]
 
-  const [users, setUsers] = useState();
+  const [users, setUsers] = useState<any[]>();
   const [onAction, setOnAction] = useState(false);
   const [clickedBox, setClickedBox] = useState();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -121,7 +121,7 @@ const Users = () => {
 
   function handleEditUser(phoneNumber: string) {
     console.log(phoneNumber, "name");
-    let clickedItem = users.filter(item => phoneNumber === item.phoneNumber)[0];
+    let clickedItem = users && users.filter(item => phoneNumber === item.phoneNumber)[0]  ;
     console.log("clicked item", clickedItem);
     clickedItem = clickedItem.telegramUsername ? clickedItem : {...clickedItem, telegramUsername: ""}
     setClickedBox(clickedItem);

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {FC} from 'react';
 import {Form, Input, Modal, Select} from "antd";
 import $api from "@/http";
 
@@ -15,12 +15,18 @@ const validateMessages = {
 
 const apiUrl = "https://us-central1-teplotest-d9137.cloudfunctions.net/app";
 
-const EditUserModal = ({form, isEditModalOpen, setIsEditModalOpen, clickedBox, setOnAction}) => {
+const EditUserModal: FC<{
+  form: any,
+  isEditModalOpen: boolean,
+  setIsEditModalOpen: any,
+  clickedBox: any,
+  setOnAction: any
+}> = ({form, isEditModalOpen, setIsEditModalOpen, clickedBox, setOnAction}) => {
 
 
   function handleEditOk() {
     form.validateFields()
-      .then((values) => {
+      .then((values: any) => {
         console.log(values);
         $api.patch(apiUrl + `/users/${clickedBox.phoneNumber}`, values)
           .then(response => {

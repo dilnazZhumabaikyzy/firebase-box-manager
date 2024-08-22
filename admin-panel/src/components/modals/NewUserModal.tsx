@@ -1,5 +1,5 @@
-import React from 'react';
-import {Flex, Form, Input, InputNumber, Modal, Select} from "antd";
+import React, {FC} from 'react';
+import {Flex, Form, Input, InputNumber, Modal, Select, SelectProps} from "antd";
 import axios from "axios";
 
 
@@ -15,12 +15,17 @@ const validateMessages = {
 
 const apiUrl = "https://us-central1-teplotest-d9137.cloudfunctions.net/app";
 
-const NewBoxModal = ({form, isAddModalOpen, setIsAddModalOpen, clickedBox, setOnAction}) => {
-
+const NewBoxModal: FC<{
+  form: any,
+  isAddModalOpen: boolean,
+  setIsAddModalOpen: any,
+  clickedBox: any,
+  setOnAction: any
+}> = ({form, isAddModalOpen, setIsAddModalOpen, clickedBox, setOnAction}) => {
 
   function handleEditOk() {
     form.validateFields()
-      .then((values) => {
+      .then((values: any) => {
         console.log(values);
 
         axios.post(apiUrl + `/users/`, {...values})

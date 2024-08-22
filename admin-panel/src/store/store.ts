@@ -10,11 +10,19 @@ export interface UserState {
   isAuth: boolean,
 }
 
+export interface Error {
+  location: string
+  msg: string
+  path: string
+  type: string
+  value: string
+}
+
 export type UserActions = {
-  login: (phoneNumber: string, password: string) => string | null
-  registration: (name: string, phoneNumber: string, password: string) =>  Error[] | string
+  login: (phoneNumber: string, password: string) =>  Promise<any>
+  registration: (name: string, phoneNumber: string, password: string) => Promise<any>
   checkAuth: () => void
-  logout: (phoneNumber) => void
+  logout: (phoneNumber: any) => void
 };
 
 export type UserStore = UserState & UserActions;
@@ -30,8 +38,7 @@ export const useUserStore = create<UserStore>()(
           localStorage.setItem("access", response.data.accessToken);
           localStorage.setItem("refresh", response.data.refreshToken);
           return null;
-        } catch (e) {
-          console.log(e);
+        } catch (e: any) {
           if (e.response?.status === 400 || e.response?.status === 401) {
             return e.response?.data?.message;
           }
@@ -45,7 +52,7 @@ export const useUserStore = create<UserStore>()(
           console.log(response);
           set({user: response.data.user, isAuth: true});
           return [];
-        } catch (e) {
+        } catch (e: any) {
           console.log(e);
           if (e.response?.status === 400 || e.response?.status === 401) {
             return e.response?.data?.message ? e.response?.data?.message : e.response.data.errors;
@@ -61,7 +68,7 @@ export const useUserStore = create<UserStore>()(
 
           console.log(response.data);
           set({user: null, isAuth: false});
-        } catch (e) {
+        } catch (e: any) {
           console.log(e);
         }
       },
@@ -72,7 +79,7 @@ export const useUserStore = create<UserStore>()(
           localStorage.setItem("access", response.data.accessToken);
           console.log(response.data);
           set({user: response.data.user, isAuth: true});
-        } catch (e) {
+        } catch (e: any) {
           console.log(e.response?.data?.message);
           set({isAuth: false});
           window.location.replace("/login")

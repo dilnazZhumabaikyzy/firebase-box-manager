@@ -1,9 +1,5 @@
 type ReportDto= {
-    id: string,
-    address: string,
-    fullness: number,
-    sleepTimeMinutes: number,
-    fullnessInSM: number,
+    st: number,
 }
 
 type FullnessItem = {

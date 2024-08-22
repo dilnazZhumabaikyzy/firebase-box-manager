@@ -101,14 +101,14 @@ const Boxes = () => {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [dataArray, setDataArray] = useState([]);
+  const [dataArray, setDataArray] = useState<any[]>([]);
   const [clickedBox, setClickedBox] = useState();
   const [onAction, setOnAction] = useState(false);
   const [loading, setLoading] = useState(false);
 
 
   useEffect(() => {
-    let responseData = [];
+    let responseData: any[] = [];
     setLoading(true);
     $api.get("/boxes").then((response) => {
       responseData = response.data;

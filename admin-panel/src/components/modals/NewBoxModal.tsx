@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {FC} from 'react';
 import {Flex, Form, Input, InputNumber, Modal, Switch} from "antd";
 import axios from "axios";
 import $api from "@/http";
@@ -16,12 +16,17 @@ const validateMessages = {
 
 const apiUrl = "https://us-central1-teplotest-d9137.cloudfunctions.net/app";
 
-const NewBoxModal = ({form, isAddModalOpen, setIsAddModalOpen, clickedBox, setOnAction}) => {
-
+const NewBoxModal: FC<{
+  form: any,
+  isAddModalOpen: boolean,
+  setIsAddModalOpen: any,
+  clickedBox: any,
+  setOnAction: any
+}> = ({form, isAddModalOpen, setIsAddModalOpen, clickedBox, setOnAction}) => {
 
   function handleEditOk() {
     form.validateFields()
-      .then((values) => {
+      .then((values: any) => {
         console.log(values);
 
         $api.post(`/boxes`, {...values, width: 1, length: 1, type: "STREET", isActive: true})
